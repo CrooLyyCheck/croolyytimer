@@ -4,6 +4,13 @@ Natywna aplikacja Android do spokojnego mierzenia czasu czytania. Kotlin, Jetpac
 Material 3, Room, DataStore, Coroutines/Flow i Navigation Compose. Cały interfejs po polsku.
 Bez reklam, analityki i obowiązkowego konta. Android **8.0+ (API 26)**.
 
+**Publiczne repozytorium, wszystkie prawa zastrzeżone.** Kod i marka należą do CrooLyyCheck.
+Ponowne wykorzystanie kodu, modyfikowanie, rozpowszechnianie i zastosowania komercyjne wymagają
+uprzedniej pisemnej zgody właściciela, z wyjątkami opisanymi w [LICENSE](LICENSE).
+Oficjalne, niezmienione APK można pobierać i używać osobiście, niekomercyjnie.
+Regulamin GitHuba nadal umożliwia przeglądanie i forki w ramach platformy;
+projekt nie jest udostępniany na licencji open source.
+
 <p align="center">
   <img src="docs/screenshots/02-library-light.png" width="220" alt="Jasna biblioteka" />
   <img src="docs/screenshots/04-reading-timer.png" width="220" alt="Timer czytania" />
@@ -36,7 +43,9 @@ Rzeczywiste komponenty Android wyrenderowane w testach Robolectric; przykładowa
 
 ## Android Studio i uruchomienie
 
-1. Sklonuj prywatne repo: `gh repo clone CrooLyyCheck/croolyytimer`.
+Instrukcje budowania są przeznaczone dla właściciela i osób mających odpowiednią zgodę zgodnie z licencją.
+
+1. Sklonuj repo: `gh repo clone CrooLyyCheck/croolyytimer`.
 2. Otwórz katalog projektu w Android Studio obsługującym AGP 9.2. Użyj JDK 21
    (wbudowany JDK Android Studio też może spełniać wymagania).
 3. Zainstaluj Android SDK Platform 36 i zaakceptuj licencje SDK w SDK Managerze.
@@ -55,7 +64,8 @@ stabilnego zestawu, bez wersji alpha/beta i bez dynamicznych `+`.
 
 Linux/macOS: `./gradlew assembleDebug`. Wynik: `app/build/outputs/apk/debug/app-debug.apk`.
 Instalacja: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
-Gotowe APK można pobrać z wydań prywatnego repozytorium.
+Gotowe APK można pobrać z [oficjalnych wydań](https://github.com/CrooLyyCheck/croolyytimer/releases)
+bez konta GitHub, na warunkach [licencji](LICENSE).
 
 ### Podpisany release
 
@@ -249,4 +259,5 @@ Schematy Room są wersjonowane. Migracja 1→2 dodaje ukończenie książki bez 
 brak destructive fallback. Nowe wersje bazy wymagają migracji i odpowiednich testów.
 
 [Brand](docs/BRAND.md) · [Specyfikacja](docs/SPECIFICATION_PL.md) · [Prywatność](docs/PRIVACY.md)
-· [Biblioteki i licencje](THIRD_PARTY_NOTICES.md). Repozytorium i kod są prywatne; prawa zastrzeżone.
+· [Biblioteki i licencje](THIRD_PARTY_NOTICES.md) · [Licencja projektu](LICENSE).
+Repozytorium jest publiczne; prawa do oryginalnego kodu i marki pozostają zastrzeżone.

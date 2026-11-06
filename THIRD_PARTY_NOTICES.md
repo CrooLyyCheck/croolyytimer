@@ -1,6 +1,6 @@
 # Wykorzystane biblioteki
 
-Kod CrooLyyTimer i oryginalna identyfikacja należą do właściciela prywatnego repozytorium.
+Oryginalny kod CrooLyyTimer i identyfikacja należą do CrooLyyCheck i podlegają [licencji projektu](LICENSE).
 Komponenty zewnętrzne zachowują własne licencje. Poniżej bezpośrednie zależności;
 pełne drzewo można odtworzyć przez `./gradlew :app:dependencies`.
 

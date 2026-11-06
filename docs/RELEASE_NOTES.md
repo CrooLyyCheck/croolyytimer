@@ -11,7 +11,10 @@
 
 APK: **CrooLyyTimer-1.1.0-debug.apk**, podpis zgodny z wydaniem 1.0.0, aktualizacja bez usuwania danych.
 To instalowalne wydanie testowe; keystore właściciela do docelowej dystrybucji nie został dostarczony.
-Repozytorium jest prywatne, więc pobieranie APK i odnośniki licencyjne wymagają dostępu do niego w GitHub.
+Repozytorium i pliki APK są publicznie dostępne, bez logowania do GitHuba.
+Oficjalne APK są udostępnione do osobistego, niekomercyjnego użytku. Ponowne wykorzystanie kodu,
+modyfikowanie i dalsze rozpowszechnianie wymagają pisemnej zgody właściciela, z wyjątkami określonymi
+w [licencji](https://github.com/CrooLyyCheck/croolyytimer/blob/main/LICENSE).
 
 Weryfikacja: 41 testów Kotlin/JVM/Robolectric i 1 test Python, lint bez błędów,
 kompilacja debug, release z R8 oraz APK testów urządzeniowych. Wszystko lokalnie, bez GitHub Actions.

@@ -1,6 +1,53 @@
+CrooLyyTimer Proprietary License
+
 Copyright (c) 2026 CrooLyyCheck. All rights reserved.
 
-This is a private, proprietary project. No license to redistribute, sublicense,
-or commercially use the CrooLyyTimer source code, name, or original brand assets
-is granted by access to this repository. Third-party components retain their own
-licenses as listed in THIRD_PARTY_NOTICES.md.
+1. Ownership and public access
+
+The original CrooLyyTimer source code, application, documentation, name, logos,
+and brand assets are proprietary. Public access to this repository permits
+inspection; it does not make the project open source or grant unrestricted
+permission to reuse its contents.
+
+2. Limited permission to use official application releases
+
+You may download, install, and run unmodified APK files published by CrooLyyCheck
+in the official CrooLyyTimer releases for personal, non-commercial use on devices
+you control. Copies reasonably necessary for installation, official updates, and
+your own backup are permitted. This permission does not authorize rehosting,
+redistribution, modification, sublicensing, or sale of the application.
+
+3. Prior written permission required for other uses
+
+Except as expressly permitted in section 2, required by GitHub's terms described
+in section 4, or permitted by applicable law, you must obtain prior written
+permission from CrooLyyCheck before copying, reusing, modifying, creating
+derivative works from, publishing, redistributing, sublicensing, selling, or
+commercially exploiting any original part of this project.
+
+No permission to use the CrooLyyTimer name, logos, or other brand assets for a
+different or modified product is granted. Retaining attribution alone does not
+grant permission for any restricted use. Permission requests should be directed
+to the repository owner, https://github.com/CrooLyyCheck.
+
+4. GitHub platform rights and applicable law
+
+Nothing in this license restricts rights that must be granted under GitHub's
+Terms of Service, including viewing and forking this public repository through
+GitHub's functionality. Those platform rights do not grant additional permission
+for unrestricted reuse, redistribution, or commercial exploitation.
+
+Nothing in this license limits rights or exceptions that cannot lawfully be
+excluded under applicable law.
+
+5. Third-party components
+
+Third-party libraries, tools, content, and other separately licensed components
+remain subject to their respective licenses and rights. This license does not
+replace or restrict those licenses. See THIRD_PARTY_NOTICES.md.
+
+6. No warranty
+
+To the extent permitted by applicable law, the project and application are
+provided "AS IS", without warranties of any kind. To that same extent, the
+copyright holder is not liable for losses or damages arising from their use.
