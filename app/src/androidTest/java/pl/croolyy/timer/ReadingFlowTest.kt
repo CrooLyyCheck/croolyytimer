@@ -60,8 +60,8 @@ class ReadingFlowTest {
         compose.onNodeWithText("Zapisz sesję").performClick()
         waitFor { repository.dao.allSessions().size == 2 }
         compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
-        val before = "Wymagaj numeru strony przed rozpoczęciem timera"
-        val after = "Wymagaj numeru strony po zakończeniu timera"
+        val before = "Wymagaj numeru strony przed rozpoczęciem stopera"
+        val after = "Wymagaj numeru strony po zakończeniu stopera"
         compose.onNodeWithTag(before).performScrollTo().assertIsOn().performClick()
         waitFor { repository.dao.settings()?.askBefore == false }
         compose.onNodeWithTag(after).assertIsOn()

@@ -59,4 +59,18 @@ class PersistenceTest {
         oversized.delete()
         assertTrue(covers.file(imported).isFile)
     }
+    @Test @Config(sdk = [26]) fun downloadedInternetCoverSurvivesRemovalOfTheNetworkCache() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bytes = java.io.ByteArrayOutputStream().use { output ->
+            Bitmap.createBitmap(24, 36, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.JPEG, 90, output)
+            output.toByteArray()
+        }
+        val client = OpenLibraryClient(context.cacheDir) { _, _ -> bytes }
+        val downloaded = client.image(CoverCandidate(9988, "Książka", "Autor", null), large = true)
+        val covers = CoverStore(context)
+        val imported = covers.import(Uri.fromFile(downloaded))
+        downloaded.delete()
+        assertTrue(covers.file(imported).isFile)
+        assertEquals(imported, sha256File(covers.file(imported)) + ".jpg")
+    }
 }

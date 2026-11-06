@@ -16,6 +16,8 @@ open class CrooLyyApp : Application() {
     val database by lazy { CrooDatabase.open(this) }
     val repository by lazy { LibraryRepository(database, clock) }
     val covers by lazy { CoverStore(this) }
+    val coverSearch by lazy { OpenLibraryClient(cacheDir) }
+    val notifications by lazy { pl.croolyy.timer.notifications.SessionNotifications(this) }
     val access by lazy { AccessManager(this, clock) }
     val backup by lazy { BackupManager(this, repository, covers) }
 }

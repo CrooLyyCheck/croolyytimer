@@ -24,7 +24,7 @@ class LibraryRepository(val db: CrooDatabase, private val clock: AppClock) {
     }
     suspend fun addTimer(bookId: String, name: String) = db.withTransaction {
         require(dao.book(bookId) != null) { "Nie znaleziono książki." }
-        require(name.length <= 150) { "Nazwa timera może mieć do 150 znaków." }
+        require(name.length <= 150) { "Nazwa stopera może mieć do 150 znaków." }
         dao.putTimer(BookTimer(bookId = bookId, name = name.trim().ifBlank { "Mój czas z książką" }))
     }
     suspend fun renameTimer(timer: BookTimer, name: String) {
@@ -36,7 +36,7 @@ class LibraryRepository(val db: CrooDatabase, private val clock: AppClock) {
         dao.deleteBook(id)
     }
     suspend fun deleteTimer(id: String) = db.withTransaction {
-        require(dao.active()?.timerId != id) { "Najpierw zakończ aktywną sesję tego timera." }
+        require(dao.active()?.timerId != id) { "Najpierw zakończ aktywną sesję tego stopera." }
         dao.deleteTimer(id)
     }
     suspend fun settings(settings: AppSettings) { dao.putSettings(settings) }
@@ -47,7 +47,7 @@ class LibraryRepository(val db: CrooDatabase, private val clock: AppClock) {
     suspend fun start(timerId: String?, page: Int?) = db.withTransaction {
         require(dao.active() == null) { "Masz już aktywną sesję. Najpierw ją zakończ." }
         require(page == null || page >= 0) { "Numer strony nie może być ujemny." }
-        val timer = timerId?.let { requireNotNull(dao.timer(it)) { "Nie znaleziono timera." } }
+        val timer = timerId?.let { requireNotNull(dao.timer(it)) { "Nie znaleziono stopera." } }
         if (timer != null && (dao.settings() ?: AppSettings()).askBefore) require(page != null) { "Podaj stronę początkową." }
         val mark = clock.now()
         dao.putActive(ActiveSession(bookId = timer?.bookId, timerId = timer?.id, startedAt = mark.wall,
@@ -76,6 +76,12 @@ class LibraryRepository(val db: CrooDatabase, private val clock: AppClock) {
             if (!active.running) dao.putActive(active.copy(running = true, boot = mark.boot,
                 segmentElapsed = mark.elapsed, checkpointElapsed = mark.elapsed))
         }
+    }
+    /** Ignore stale notification actions and enforce the same general-stopwatch lock as the UI. */
+    suspend fun toggleFromNotification(sessionId: String, generalUnlocked: Boolean) = db.withTransaction {
+        val active = dao.active() ?: return@withTransaction
+        if (active.sessionId != sessionId) return@withTransaction
+        if (active.running) pause() else if (active.bookId != null || generalUnlocked) resume()
     }
     suspend fun finish(endPage: Int?, acknowledgeBackwards: Boolean = false) = db.withTransaction {
         val a = requireNotNull(dao.active()) { "Brak aktywnej sesji." }

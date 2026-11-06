@@ -40,7 +40,7 @@ import pl.croolyy.timer.domain.SessionClock
                             Icon(Icons.Outlined.Lock, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                         Text("Dobra historia\nzaczyna się od książki", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                        Text("Lepiej używaj timera z zakładki Książki! 📚\n\nJeśli jednak, szczurku 🐀, naprawdę chcesz korzystać ze zwykłego timera, przejdź do Ustawień i wpisz hasło odblokowujące.",
+                        Text("Lepiej używaj stopera z zakładki Książki! 📚\n\nJeśli jednak, szczurku 🐀, naprawdę chcesz korzystać ze zwykłego stopera, przejdź do Ustawień i wpisz hasło odblokowujące.",
                             textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Button(onSettings, Modifier.fillMaxWidth()) { Text("Przejdź do ustawień") }
                         TextButton(onBooks) { Icon(Icons.Outlined.AutoStories, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Otwórz swoją bibliotekę") }
@@ -57,11 +57,11 @@ import pl.croolyy.timer.domain.SessionClock
                         Icon(Icons.Outlined.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text("Rozpocznij pomiar")
                     }
                     if (state.active != null) TextButton(onFocus) { Text("Przejdź do aktywnej sesji książki") }
-                    Text(if (access.permanent) "Timer odblokowany na stałe" else "Dostęp do ${dateTime(access.expiresAt)}", style = MaterialTheme.typography.bodySmall)
+                    Text(if (access.permanent) "Stoper odblokowany na stałe" else "Dostęp do ${dateTime(access.expiresAt)}", style = MaterialTheme.typography.bodySmall)
                 }
             } }
         }
-        item { SectionTitle("Historia pomiarów", "Zwykły timer ma własną historię.") }
+        item { SectionTitle("Historia pomiarów", "Zwykły stoper ma własną historię.") }
         if (state.generalSessions.isEmpty()) item { EmptyState(Icons.Outlined.History, "Czas jeszcze przed Tobą", "Zapisane pomiary pojawią się tutaj.") }
         items(state.generalSessions, key = { it.id }) { session ->
             SoftCard {
@@ -86,7 +86,7 @@ import pl.croolyy.timer.domain.SessionClock
     val book = state.books.find { it.id == active.bookId }
     val timer = state.timers.find { it.id == active.timerId }
     val ringColor = MaterialTheme.colorScheme.primary.copy(alpha = .18f)
-    val pulse by animateFloatAsState(if (active.running) 1f else .94f, spring(stiffness = Spring.StiffnessLow), label = "Rytm timera")
+    val pulse by animateFloatAsState(if (active.running) 1f else .94f, spring(stiffness = Spring.StiffnessLow), label = "Rytm stopera")
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (book != null) {
@@ -143,7 +143,7 @@ import pl.croolyy.timer.domain.SessionClock
         Row(Modifier.padding(start = 16.dp, end = 6.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.MenuBook, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(state.books.find { it.id == active.bookId }?.title ?: "Zwykły timer", maxLines = 1,
+                Text(state.books.find { it.id == active.bookId }?.title ?: "Zwykły stoper", maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = MaterialTheme.typography.labelLarge)
                 Text("${duration(SessionClock.duration(active, mark))} · ${if (active.running) "w trakcie" else "pauza"}", style = MaterialTheme.typography.bodySmall)
             }

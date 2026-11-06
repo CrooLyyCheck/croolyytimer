@@ -1,6 +1,8 @@
 package pl.croolyy.timer
 
 import android.os.Bundle
+import android.content.Intent
+import pl.croolyy.timer.notifications.SessionNotifications
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,16 +27,26 @@ class MainActivity : ComponentActivity() {
         if (result.resultCode == RESULT_OK && result.data != null) {
             runCatching { authorization.getAuthorizationResultFromIntent(result.data).accessToken }
                 .onSuccess { token -> if (token != null) vm.authorized(token) else vm.error("Google nie udostępnił dostępu do kopii.") }
-                .onFailure { vm.error("Nie udało się połączyć z Google Drive. Sprawdź konfigurację OAuth.") }
+                .onFailure { vm.error("Nie udało się połączyć z Google Drive. Spróbuj ponownie później.") }
         } else vm.error("Połączenie z Google Drive anulowane.")
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (intent?.action == SessionNotifications.OPEN) vm.openActive.value = true
         lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { vm.visibleTicker() } }
         setContent { CrooApp(vm, ::connectGoogle, ::disconnectGoogle) }
     }
     override fun onStop() { vm.backgroundCheckpoint(); super.onStop() }
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch { (application as CrooLyyApp).notifications.refresh() }
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == SessionNotifications.OPEN) vm.openActive.value = true
+    }
     private fun connectGoogle() {
         authorization.authorize(AuthorizationRequest.builder().setRequestedScopes(scopes).build())
             .addOnSuccessListener { result ->
@@ -43,7 +55,7 @@ class MainActivity : ComponentActivity() {
                         ?: vm.error("Google nie udostępnił okna zgody.")
                 } else result.accessToken?.let(vm::authorized) ?: vm.error("Brak dostępu do Google Drive.")
             }
-            .addOnFailureListener { vm.error("Nie można połączyć z Google Drive. Sprawdź internet, usługi Google Play i konfigurację OAuth (pakiet i SHA certyfikatu).") }
+            .addOnFailureListener { vm.error("Nie można połączyć z Google Drive. Sprawdź internet i spróbuj ponownie.") }
     }
     private fun disconnectGoogle() {
         authorization.revokeAccess(RevokeAccessRequest.builder().setScopes(scopes).build())

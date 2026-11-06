@@ -24,5 +24,11 @@ pełne drzewo można odtworzyć przez `./gradlew :app:dependencies`.
 
 Teksty licencji Apache 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
-Nie są dołączane okładki, fonty ani grafiki aplikacji referencyjnej. Okładki dodaje użytkownik;
+Wyszukiwarka używa [Open Library Search API](https://openlibrary.org/dev/docs/api/search)
+i [Covers API](https://openlibrary.org/dev/docs/api/covers), bez dodatkowej biblioteki klienckiej.
+Źródło jest podpisane w aplikacji. Prawa do poszczególnych okładek należą do ich właścicieli;
+nie są częścią kodu ani grafik marki CrooLyyTimer. Warunki dostawcy:
+[Internet Archive](https://archive.org/about/terms.php).
+
+Nie są dołączane okładki, fonty ani grafiki aplikacji referencyjnej. Okładki wybiera użytkownik;
 okładki zastępcze i ikona są generowane z własnych elementów wektorowych.

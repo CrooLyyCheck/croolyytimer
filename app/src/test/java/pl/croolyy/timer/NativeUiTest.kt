@@ -10,6 +10,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
+import org.junit.After
+import kotlinx.coroutines.cancel
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -27,6 +29,13 @@ import java.io.File
 class NativeUiTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val repository get() = (compose.activity.application as CrooLyyApp).repository
+    @After fun closeAppResources() {
+        compose.runOnIdle {
+            compose.activity.viewModelStore.clear()
+            (compose.activity.application as CrooLyyApp).scope.cancel()
+        }
+        (compose.activity.application as CrooLyyApp).database.close()
+    }
     private fun waitFor(condition: suspend () -> Boolean) {
         try { compose.waitUntil(15000) { runBlocking { condition() } } }
         catch (e: Throwable) { throw AssertionError(runBlocking {
@@ -44,13 +53,12 @@ class NativeUiTest {
         }
     }
     @Test fun nativeLibraryTimerHistoryAndThemeWithPagePromptsDisabled() {
-        val vm = ViewModelProvider(compose.activity)[AppViewModel::class.java]
-        compose.setContent { CrooApp(vm, {}, {}) }
+        compose.setContent { CrooApp(androidx.lifecycle.viewmodel.compose.viewModel<AppViewModel>(), {}, {}) }
         compose.onNodeWithText("Przejdź do ustawień").assertExists()
         screenshot("01-timer-locked")
         compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
-        val before = "Wymagaj numeru strony przed rozpoczęciem timera"
-        val after = "Wymagaj numeru strony po zakończeniu timera"
+        val before = "Wymagaj numeru strony przed rozpoczęciem stopera"
+        val after = "Wymagaj numeru strony po zakończeniu stopera"
         compose.onNodeWithTag(before).performScrollTo().assertIsOn().performClick()
         waitFor { repository.dao.settings()?.askBefore == false }
         compose.onNodeWithTag(after).performScrollTo().assertIsOn().performClick()
@@ -94,6 +102,9 @@ class NativeUiTest {
         waitFor { repository.dao.settings()?.theme == "dark" }
         compose.onNodeWithText("Książki", useUnmergedTree = true).performClick()
         screenshot("05-library-dark")
+        compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
+        compose.onNodeWithTag("about-card").performScrollTo().assertExists()
+        screenshot("09-settings-about")
     }
 }
 

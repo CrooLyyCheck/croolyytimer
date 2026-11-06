@@ -31,6 +31,18 @@ import java.time.LocalDate
     val staged by vm.stagedRestore.collectAsStateWithLifecycle()
     val encryptedRestore by vm.restoreEncrypted.collectAsStateWithLifecycle()
     val nav = rememberNavController()
+    val context = LocalContext.current
+    val openActive by vm.openActive.collectAsStateWithLifecycle()
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) vm.runAction { vm.app.notifications.refresh() }
+    }
+    LaunchedEffect(vm) { vm.notificationPermissionRequests.collect {
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    } }
+    LaunchedEffect(openActive, state.active?.sessionId) {
+        if (openActive && state.active != null) { nav.navigate("focus") { launchSingleTop = true }; vm.openActive.value = false }
+    }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: "timer"
     val snack = remember { SnackbarHostState() }
@@ -83,9 +95,9 @@ import java.time.LocalDate
             bottomBar = { Column {
                 if (state.active != null && route != "focus" && operation == null) ActiveDock(state.active!!, state, vm) { nav.navigate("focus") { launchSingleTop = true } }
                 NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                    val tabs = listOf(Triple("timer", "Timer", Icons.Outlined.Timer), Triple("books", "Książki", Icons.Outlined.AutoStories), Triple("settings", "Ustawienia", Icons.Outlined.Tune))
+                    val tabs = listOf(Triple("timer", "Stoper", Icons.Outlined.Timer), Triple("books", "Książki", Icons.Outlined.AutoStories), Triple("calendar", "Kalendarz", Icons.Outlined.CalendarMonth), Triple("settings", "Ustawienia", Icons.Outlined.Tune))
                     tabs.forEach { (key, title, icon) ->
-                        val selected = when (key) { "books" -> route.startsWith("book") || route.startsWith("edit") || route == "new" || route == "focus"; else -> route == key }
+                        val selected = when (key) { "books" -> route.startsWith("book") || route.startsWith("edit") || route == "new" || route == "focus"; "calendar" -> route.startsWith("calendar"); else -> route == key }
                         NavigationBarItem(selected, { navigate(key) }, icon = { Icon(icon, null) }, label = { Text(title) })
                     }
                 }
@@ -98,7 +110,7 @@ import java.time.LocalDate
                     composable("books") { BooksScreen(state, vm, { nav.navigate("book/$it") }, { nav.navigate("new") }) }
                     composable("book/{id}") { backStack ->
                         val book = state.books.find { it.id == backStack.arguments?.getString("id") }
-                        if (book != null) BookDetailScreen(book, state, vm, { nav.popBackStack() }, { nav.navigate("edit/${book.id}") }, ::begin, { nav.navigate("focus") })
+                        if (book != null) BookDetailScreen(book, state, vm, { nav.popBackStack() }, { nav.navigate("edit/${book.id}") }, ::begin, { nav.navigate("focus") }, { nav.navigate("calendar/${book.id}") })
                         else EmptyState(Icons.Outlined.MenuBook, "Książka niedostępna", "Wróć do biblioteki.") { TextButton({ navigate("books") }) { Text("Biblioteka") } }
                     }
                     composable("new") { BookFormScreen(null, vm) { nav.popBackStack() } }
@@ -106,6 +118,8 @@ import java.time.LocalDate
                         state.books.find { it.id == backStack.arguments?.getString("id") }?.let { book -> BookFormScreen(book, vm) { nav.popBackStack() } }
                     }
                     composable("focus") { FocusScreen(state, vm, ::finish, { navigate("books") }) }
+                    composable("calendar") { CalendarScreen(state, vm.app.covers::file, onBook = { nav.navigate("book/$it") }) }
+                    composable("calendar/{id}") { stack -> CalendarScreen(state, vm.app.covers::file, stack.arguments?.getString("id"), onBook = { nav.navigate("book/$it") }) }
                     composable("settings") { SettingsScreen(state.settings, access, vm, lastBackup, connected, backups,
                         { requestExport(false) }, { import.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
                         connectGoogle, disconnectGoogle, { requestExport(true) }) }

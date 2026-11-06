@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import pl.croolyy.timer.BuildConfig
 import pl.croolyy.timer.backup.DriveBackup
 import pl.croolyy.timer.data.AppSettings
@@ -35,26 +39,41 @@ import pl.croolyy.timer.security.AccessState
     var deleteBackup by remember { mutableStateOf<DriveBackup?>(null) }
     var privacy by remember { mutableStateOf(false) }
     var licenses by remember { mutableStateOf(false) }
+    val links = LocalUriHandler.current
+    val context = LocalContext.current
+    fun notificationSettings(promoted: Boolean = false) {
+        val action = if (promoted && android.os.Build.VERSION.SDK_INT >= 36) android.provider.Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS
+            else android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS
+        runCatching { context.startActivity(android.content.Intent(action).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)) }
+            .onFailure { vm.error("Nie można otworzyć ustawień powiadomień.") }
+    }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) vm.runAction { vm.app.notifications.refresh() } else notificationSettings()
+    }
+    fun openLink(path: String) {
+        runCatching { links.openUri("https://github.com/CrooLyyCheck/croolyytimer/blob/main/$path") }
+            .onFailure { vm.error("Nie można otworzyć przeglądarki.") }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         SectionTitle("Po Twojemu", "Małe ustawienia. Dobry rytm czytania.")
         SoftCard {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.primary)
-                Text("Odblokowanie zwykłego timera", style = MaterialTheme.typography.titleLarge)
+                Text("Odblokowanie zwykłego stopera", style = MaterialTheme.typography.titleLarge)
             }
-            Text(when { access.permanent -> "Timer odblokowany na stałe"
+            Text(when { access.permanent -> "Stoper odblokowany na stałe"
                 access.unlocked -> "Dostęp wygasa: ${dateTime(access.expiresAt)}"
-                else -> "Zwykły timer jest zablokowany. Timery książek są zawsze dostępne." }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                else -> "Zwykły stoper jest zablokowany. Stopery książek są zawsze dostępne." }, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(password, { if (it.length <= 1024) password = it }, Modifier.fillMaxWidth(), label = { Text("Hasło odblokowujące") },
                 visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), singleLine = true)
-            Button({ val chars = password.toCharArray(); password = ""; vm.unlock(chars) }, enabled = password.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("Odblokuj timer") }
+            Button({ val chars = password.toCharArray(); password = ""; vm.unlock(chars) }, enabled = password.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("Odblokuj stoper") }
             if (access.cooldownUntil > access.trustedNow) Text("Przerwa po nieudanych próbach: ${(access.cooldownUntil - access.trustedNow + 999) / 1000} s.", style = MaterialTheme.typography.bodySmall)
         }
         SoftCard {
             Text("Twój sposób czytania", style = MaterialTheme.typography.titleLarge)
-            SettingSwitch("Wymagaj numeru strony przed rozpoczęciem timera", checked = settings.askBefore) { enabled -> vm.updateSettings { it.copy(askBefore = enabled) } }
+            SettingSwitch("Wymagaj numeru strony przed rozpoczęciem stopera", checked = settings.askBefore) { enabled -> vm.updateSettings { it.copy(askBefore = enabled) } }
             HorizontalDivider()
-            SettingSwitch("Wymagaj numeru strony po zakończeniu timera", checked = settings.askAfter) { enabled -> vm.updateSettings { it.copy(askAfter = enabled) } }
+            SettingSwitch("Wymagaj numeru strony po zakończeniu stopera", checked = settings.askAfter) { enabled -> vm.updateSettings { it.copy(askAfter = enabled) } }
             Text("Oba pytania działają niezależnie. Strony możesz później poprawić w historii książki.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SoftCard {
@@ -67,6 +86,16 @@ import pl.croolyy.timer.security.AccessState
             SettingSwitch("Nie wygaszaj ekranu podczas sesji", "Dotyczy tylko widocznej aplikacji i aktywnego pomiaru.", settings.keepScreenOn) { enabled -> vm.updateSettings { it.copy(keepScreenOn = enabled) } }
         }
         SoftCard {
+            Text("Stoper poza aplikacją", style = MaterialTheme.typography.titleLarge)
+            Text("Czas i przyciski w powiadomieniu, także przy zablokowanym ekranie.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton({
+                if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                    permission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                else notificationSettings()
+            }, Modifier.fillMaxWidth()) { Text("Ustawienia powiadomień") }
+            if (android.os.Build.VERSION.SDK_INT >= 36) TextButton({ notificationSettings(true) }) { Text("Widoczność na pasku systemowym") }
+        }
+        SoftCard {
             Text("Kopie zapasowe", style = MaterialTheme.typography.titleLarge)
             Text("Twoje książki, okładki i historia w jednym ZIP-ie.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             SettingSwitch("Zaszyfruj kopię zapasową hasłem", "AES-256 · hasło podasz przy tworzeniu każdej kopii.", settings.encryptBackup) { enabled -> vm.updateSettings { it.copy(encryptBackup = enabled) } }
@@ -77,7 +106,7 @@ import pl.croolyy.timer.security.AccessState
         }
         SoftCard {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { Icon(Icons.Outlined.CloudQueue, null); Text("Google Drive", style = MaterialTheme.typography.titleLarge) }
-            Text("Opcjonalna kopia w ukrytym folderze aplikacji. Wymaga konfiguracji OAuth przez właściciela aplikacji — instrukcja jest w repozytorium. Główne funkcje działają bez konta.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Zachowaj kopię biblioteki na swoim koncie Google.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (!connected) Button(onConnect, Modifier.fillMaxWidth()) { Text("Połącz konto Google") }
             else {
                 Text("Połączono z Google Drive · tylko dane tej aplikacji", style = MaterialTheme.typography.labelLarge)
@@ -96,7 +125,7 @@ import pl.croolyy.timer.security.AccessState
                 }
             }
         }
-        SoftCard {
+        SoftCard(Modifier.fillMaxWidth().testTag("about-card")) {
             Brand()
             Text("Wersja ${BuildConfig.VERSION_NAME} · Android 8.0+", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             TextButton({ privacy = true }) { Text("Prywatność danych") }
@@ -107,8 +136,14 @@ import pl.croolyy.timer.security.AccessState
     }
     deleteBackup?.let { backup -> ConfirmDialog("Usunąć kopię z Google Drive?", "Usuniesz trwale tylko wybraną kopię: ${backup.name}. Pozostałe kopie i dane w telefonie zostaną zachowane.", onDismiss = { deleteBackup = null }) { vm.deleteDrive(backup) } }
     if (privacy) AlertDialog(onDismissRequest = { privacy = false }, title = { Text("Twoje dane należą do Ciebie") },
-        text = { Text("CrooLyyTimer działa offline, bez reklam i analityki. Dane i okładki są w prywatnej pamięci aplikacji. Internet służy wyłącznie opcjonalnym kopiom Google Drive. Token Google pozostaje w pamięci procesu. ZIP zawiera Twoją bibliotekę; lokalne odblokowanie timera nie jest eksportowane. Usunięcie aplikacji usuwa lokalne dane — zachowaj własny backup.") },
+        text = { Text("Twoja biblioteka i pomiary działają offline, bez reklam i analityki. Książki, okładki i historia są przechowywane w telefonie. Gdy szukasz okładki, wpisany tytuł trafia do Open Library. Wybrany obraz zapisujemy w aplikacji. Konto Google jest potrzebne wyłącznie do kopii na Google Drive. Kopia ZIP zawiera bibliotekę i ustawienia, ale nie odblokowanie stopera. Usunięcie aplikacji usuwa lokalne dane — zachowaj kopię zapasową.") },
         confirmButton = { TextButton({ privacy = false }) { Text("Rozumiem") } })
-    if (licenses) AlertDialog(onDismissRequest = { licenses = false }, title = { Text("Licencje") }, text = { Text("CrooLyyTimer © 2026 CrooLyyCheck. Wszelkie prawa zastrzeżone.\n\nAndroidX / Compose / Room / DataStore / Navigation: Apache 2.0\nKotlin / kotlinx: Apache 2.0\nZip4j: Apache 2.0\nBouncy Castle: MIT\nGoogle Play Services: warunki Google Play Services\n\nPełna lista i odnośniki: THIRD_PARTY_NOTICES.md w repozytorium.") },
+    if (licenses) AlertDialog(onDismissRequest = { licenses = false }, title = { Text("Licencja i biblioteki") }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("CrooLyyTimer © 2026 CrooLyyCheck")
+            TextButton({ openLink("LICENSE") }) { Text("Licencja aplikacji"); Spacer(Modifier.width(8.dp)); Icon(Icons.Outlined.OpenInNew, null, Modifier.size(16.dp)) }
+            TextButton({ openLink("THIRD_PARTY_NOTICES.md") }) { Text("Biblioteki i ich licencje"); Spacer(Modifier.width(8.dp)); Icon(Icons.Outlined.OpenInNew, null, Modifier.size(16.dp)) }
+        }
+    },
         confirmButton = { TextButton({ licenses = false }) { Text("Zamknij") } })
 }

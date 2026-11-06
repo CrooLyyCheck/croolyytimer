@@ -23,6 +23,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val lastBackup = app.backup.lastBackup.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
     private val messageChannel = Channel<String>(Channel.BUFFERED)
     val messages = messageChannel.receiveAsFlow()
+    private val notificationPermissionChannel = Channel<Unit>(Channel.BUFFERED)
+    val notificationPermissionRequests = notificationPermissionChannel.receiveAsFlow()
+    val openActive = MutableStateFlow(false)
     val operation = MutableStateFlow<Operation?>(null)
     val now = MutableStateFlow(app.clock.now())
     val driveBackups = MutableStateFlow<List<DriveBackup>>(emptyList())
@@ -37,6 +40,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun consumeExport(): PendingExport? = pendingExport.also { pendingExport = null }
 
     init {
+        app.notifications.start()
         runAction { repository.checkpoint(); app.access.refresh() }
     }
     /** Only while the Activity is visible. No service or background polling is needed for timing. */
@@ -59,13 +63,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun error(message: String) { runAction { notify(message) } }
     fun unlock(password: CharArray) { runAction { notify(app.access.unlock(password)) } }
     fun start(timerId: String?, page: Int?) { runAction {
-        if (timerId == null) { app.access.refresh(); require(access.value.unlocked) { "Odblokuj zwykły timer w ustawieniach." } }
+        if (timerId == null) { app.access.refresh(); require(access.value.unlocked) { "Odblokuj zwykły stoper w ustawieniach." } }
         repository.start(timerId, page)
+        notificationPermissionChannel.send(Unit)
     } }
     fun pauseResume() { runAction {
         val active = repository.dao.active() ?: return@runAction
         if (active.running) repository.pause() else {
-            if (active.bookId == null) { app.access.refresh(); require(access.value.unlocked) { "Odblokuj timer przed wznowieniem." } }
+            if (active.bookId == null) { app.access.refresh(); require(access.value.unlocked) { "Odblokuj stoper przed wznowieniem." } }
             repository.resume()
         }
     } }
@@ -107,7 +112,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun restore(password: CharArray?) { val file = stagedRestore.value ?: return
         task("Przywracanie danych") { progress ->
             app.backup.restore(file, password, progress)
-            cancelRestore(); notify("Przywrócono książki, okładki, timery, sesje i ustawienia.")
+            cancelRestore(); notify("Przywrócono książki, okładki, stopery, sesje i ustawienia.")
         }
     }
     fun authorized(token: String) { drive = DriveClient(token); driveConnected.value = true; listDrive() }

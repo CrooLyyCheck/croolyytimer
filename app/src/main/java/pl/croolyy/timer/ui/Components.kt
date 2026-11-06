@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -31,6 +32,13 @@ val Polish: Locale = Locale.forLanguageTag("pl-PL")
 fun duration(ms: Long): String { val s = ms.coerceAtLeast(0) / 1000; return "%02d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) }
 fun shortTime(ms: Long): String { val m = ms.coerceAtLeast(0) / 60000; return if (m >= 60) "${m / 60} godz. ${m % 60} min" else "$m min" }
 fun dateTime(time: Long): String = Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Polish))
+private fun counted(value: Int, one: String, few: String, many: String) = "$value " + when {
+    value == 1 -> one
+    value % 10 in 2..4 && value % 100 !in 12..14 -> few
+    else -> many
+}
+fun sessionCount(value: Int) = counted(value, "sesja", "sesje", "sesji")
+fun bookCount(value: Int) = counted(value, "książka", "książki", "książek")
 
 @Composable fun Brand(modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -94,7 +102,7 @@ fun dateTime(time: Long): String = Instant.ofEpochMilli(time).atZone(ZoneId.syst
         action?.invoke()
     }
 }
-@Composable fun SoftCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+@Composable fun SoftCard(modifier: Modifier = Modifier.fillMaxWidth(), content: @Composable ColumnScope.() -> Unit) {
     Surface(modifier, color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .65f))) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
@@ -102,7 +110,8 @@ fun dateTime(time: Long): String = Instant.ofEpochMilli(time).atZone(ZoneId.syst
 }
 @Composable fun Metric(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+        Text(value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary,
+            maxLines = 1, autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 22.sp, stepSize = 1.sp))
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

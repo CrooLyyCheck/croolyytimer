@@ -5,6 +5,9 @@
 Nazwa aplikacji: **CrooLyyTimer**. Repozytorium: **croolyytimer**.
 Pakiet Android: `pl.croolyy.timer`.
 
+Marka pozostaje CrooLyyTimer, a nazwa funkcji po polsku to **stoper**: czas rośnie od zera.
+Nie nazywamy jej minutnikiem i nie sugerujemy odliczania. Repo i pakiet zachowują ciągłość aktualizacji.
+
 CrooLyyTimer to spokojny towarzysz codziennego czytania. Marka opiera się na ciepłym papierze,
 leśnej zieleni i odrobinie złota. Komunikaty są krótkie, przyjazne i całkowicie po polsku.
 

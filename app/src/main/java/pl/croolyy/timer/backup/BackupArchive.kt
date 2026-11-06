@@ -135,7 +135,7 @@ class BackupArchive {
             require(it.title.isNotBlank() && it.title.length <= 300 && it.author.length <= 300 && it.currentPage >= 0 &&
                 (it.totalPages == null || it.totalPages > 0) && (it.cover == null || it.cover.matches(Regex("[a-f0-9]{64}\\.jpg")))) { "Nieprawidłowa książka." }
         }
-        s.timers.forEach { require(it.bookId in books && it.name.length <= 150) { "Nieprawidłowe przypisanie timera." } }
+        s.timers.forEach { require(it.bookId in books && it.name.length <= 150) { "Nieprawidłowe przypisanie stopera." } }
         s.sessions.forEach {
             require(it.bookId in books && timers[it.timerId]?.bookId == it.bookId && it.durationMs in 0..315_360_000_000L &&
                 (it.startPage == null || it.startPage >= 0) && (it.endPage == null || it.endPage >= 0)) { "Nieprawidłowa sesja." }

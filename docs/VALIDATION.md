@@ -1,4 +1,4 @@
-# Weryfikacja CrooLyyTimer 1.0.0
+# Weryfikacja CrooLyyTimer 1.1.0
 
 Data: **6 listopada 2026**. Weryfikacja lokalna na Windows, JDK 21, Gradle Wrapper 9.4.1,
 Android SDK 36. Zgodnie z decyzją właściciela repozytorium **nie używa GitHub Actions**.
@@ -7,7 +7,7 @@ Android SDK 36. Zgodnie z decyzją właściciela repozytorium **nie używa GitHu
 
 | Sprawdzenie | Wynik |
 | --- | --- |
-| Testy Kotlin / JVM / Robolectric | 24 testy, 0 błędów |
+| Testy Kotlin / JVM / Robolectric | 41 testów, 0 błędów |
 | Test skryptu zmiany hasła | 1 test, 0 błędów |
 | Android lint debug | 0 błędów; pozostają ostrzeżenia o nowszych wersjach zależności i drobne zalecenia |
 | APK debug | zbudowany; podpis debug |
@@ -15,13 +15,16 @@ Android SDK 36. Zgodnie z decyzją właściciela repozytorium **nie używa GitHu
 | APK testów urządzeniowych | zbudowany |
 
 Podpis debug został zweryfikowany narzędziem Android `apksigner verify --print-certs`.
-APK: `CrooLyyTimer-1.0.0-debug.apk` (24 946 607 B).
-SHA-256: `adc8ec2756b1adf2ad39928d9a882e8f571046ca9b68e6e0a8142d4152fab68c`.
+APK: `CrooLyyTimer-1.1.0-debug.apk` (24 776 400 B), `versionCode=2`, pakiet `pl.croolyy.timer`.
+SHA-256: `59ca5b2b9a4ad931a1f0b95a2f5dc7d6d0d500d45efb8be7773cc37a02ef9b70`.
+SHA-1 certyfikatu: `FD:21:F8:38:94:E1:08:8B:BC:22:18:86:FF:28:C1:B3:77:0A:F9:32`,
+ten sam co 1.0.0. `aapt dump badging` potwierdza Android 8.0+ i target 36.
 
 Polecenia:
 
 ```powershell
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleRelease assembleDebugAndroidTest
+.\gradlew.bat testDebugUnitTest
+.\gradlew.bat lintDebug assembleDebug assembleRelease assembleDebugAndroidTest
 python -m unittest discover -s tools/tests -v
 ```
 
@@ -44,12 +47,27 @@ python -m unittest discover -s tools/tests -v
 - Błąd importu nie zmienia istniejącej biblioteki.
 - Natywny interfejs w Robolectric: dodanie książki, timery bez pytań o strony, pauza/wznowienie,
   dwie zapisane sesje, niezależne przełączniki i zmiana na ciemny motyw.
+- Statystyki: lokalne daty i zmiana czasu letniego, przekroczenie północy, ważone tempo,
+  brakujące/cofnięte strony, serie dni, puste dane, miesiąc przestępny i szacunek czasu do końca.
+- Interfejs wykresu 7/30 dni, wybór daty heatmapy, filtrowanie książek i otwieranie książki z sesji.
+- Open Library: kodowanie polskich tytułów i parametrów, odrzucenie wyników bez okładki,
+  usuwanie duplikatów, limit propozycji, buforowanie zapytań i wybranego obrazu.
+- Interfejs wyszukania i wyboru dużej okładki z podstawionym transportem. Osobny test API 26
+  potwierdza skopiowanie pobranego obrazu do prywatnego magazynu i przetrwanie usunięcia cache.
+- Powiadomienia na API 35 i 36: licznik w górę, nieruchomy czas na pauzie, prośba o promowanie,
+  tożsamość działań dla konkretnej sesji i respektowanie usunięcia powiadomienia.
+- Działanie ze starego powiadomienia nie zmienia nowej sesji; zablokowanego zwykłego stopera
+  nie można wznowić przyciskiem powiadomienia.
+- 6 listopada 2026 wykonano rzeczywiste zapytanie Search API o „Mały Książę”: zwróciło kilka
+  wydań z okładkami. Duży obraz z Covers API zwrócił HTTP 200 i 31 865 B. To próba HTTP na hoście,
+  a nie test internetu i importu na fizycznym telefonie.
 
 ## Kontrola wizualna
 
 Rendery natywnych komponentów Android wykonano przez Robolectric z grafiką natywną,
 na wymiarach 393×850 dp. To rzeczywiste ekrany Compose z testową biblioteką, a nie makiety HTML.
-Sprawdzono jasny ekran blokady, bibliotekę, szczegóły książki, aktywny timer i ciemną bibliotekę.
+Sprawdzono jasny ekran blokady, bibliotekę, szczegóły książki, aktywny stoper i ciemną bibliotekę,
+a także komponenty kalendarza, wybranego dnia, statystyk i pełnej szerokości karty ustawień.
 Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do instalowanej aplikacji.
 
 ## Co wymaga telefonu lub konfiguracji zewnętrznej
@@ -69,6 +87,14 @@ Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do i
 5. Google Drive ma rzeczywistą implementację API, ale **nie został autoryzowany ani przetestowany
    na koncie właściciela**. Wymaga konfiguracji opisanej w [GOOGLE_DRIVE.md](GOOGLE_DRIVE.md).
 6. Podpisany kluczem właściciela release wymaga jego keystore. Dostarczony debug APK jest instalowalny.
+7. Systemowe wyświetlanie pastylki, Now Bar, uprawnienia i działania z zablokowanego ekranu
+   wymagają końcowej próby na konkretnym Samsungu. Testy JVM potwierdzają budowę i stan
+   powiadomienia, nie zachowanie interfejsu One UI.
+8. Dekoder ImageDecoder z API 28+ używa natywnego kodu Androida, którego odczyt pliku nie działał
+   w tym teście Windows. Test UI okładek potwierdza wybór i pobranie pliku, a osobny test API 26
+   sprawdza import. Pełny import okładki na nowszym Androidzie pozostaje do sprawdzenia na urządzeniu.
+9. Skrypt PowerShell ma zweryfikowaną składnię, a rotacja hasła w Pythonie test automatyczny.
+   Prywatne hasło właściciela nie zostało ustawione ani wygenerowane w logach tej sesji.
 
 ## Świadome ograniczenia
 
@@ -77,5 +103,7 @@ Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do i
 - Lokalna blokada funkcji nie jest zabezpieczeniem wrażliwych danych przed rootem lub zmienionym APK.
 - Pierwszy losowy sekret administratora został odrzucony; właściciel ustawia własny skryptem i przebudowuje APK.
 - Przerwany transfer Drive jest ponawiany jako nowy transfer, bez wznawiania po śmierci procesu.
-- Nie ma automatycznych kopii ani powiadomienia z usługą foreground. Stan timera nie wymaga pracy w tle.
+- Nie ma automatycznych kopii ani usługi foreground. Chronometr powiadomienia obsługuje system;
+  pomiar nie wymaga pracy procesora co sekundę w tle.
+- Sesje w kalendarzu są przypisane do daty rozpoczęcia, bez dzielenia przez północ.
 - Limity wielkości kopii, zasady prywatności i zachowanie nieużywanych okładek są opisane w README.

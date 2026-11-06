@@ -32,6 +32,20 @@ class RepositoryBackupTest {
     }
     @After fun close() { db.close() }
 
+    @Test fun notificationActionsIgnoreOldSessionsAndCannotResumeLockedGeneralStopwatch() = runBlocking {
+        repository.start(null, null)
+        val first = repository.dao.active()!!.sessionId
+        repository.toggleFromNotification("old-session", true)
+        assertTrue(repository.dao.active()!!.running)
+        repository.toggleFromNotification(first, false)
+        assertFalse(repository.dao.active()!!.running)
+        repository.toggleFromNotification(first, false)
+        assertFalse(repository.dao.active()!!.running)
+        repository.toggleFromNotification(first, true)
+        assertTrue(repository.dao.active()!!.running)
+        Unit
+    }
+
     @Test fun fullRoundTripRestoresBooksTimersSessionsSettingsAndCovers() = runBlocking {
         val covers = CoverStore(context)
         val bytes = ByteArrayOutputStream().use { out ->

@@ -12,16 +12,24 @@ Bez reklam, analityki i obowiązkowego konta. Android **8.0+ (API 26)**.
 
 Rzeczywiste komponenty Android wyrenderowane w testach Robolectric; przykładowa biblioteka nie jest częścią APK.
 
+<p align="center">
+  <img src="docs/screenshots/06-calendar-heatmap.png" width="250" alt="Kalendarz czytania z heatmapą" />
+  <img src="docs/screenshots/08-book-statistics.png" width="250" alt="Wykres i szczegółowe statystyki książki" />
+</p>
+
 ## Co działa
 
 - Biblioteka: dodawanie, edycja, wyszukiwanie, ukończenie i usuwanie książek.
-- Okładki z plików/galerii i aparatu, kopiowane do prywatnej pamięci; autorskie okładki zastępcze.
-- Dowolna liczba nazwanych timerów na książkę, sumowana historia i statystyki.
+- Okładki z plików/galerii, aparatu i wyszukiwarki Open Library: propozycje po tytule, wybór i zapis lokalny.
+- Dowolna liczba nazwanych stoperów na książkę, sumowana historia i statystyki.
+- Wykresy 7/30 dni, tempo, serie dni, najdłuższa sesja i szacowany czas do końca książki.
+- Kalendarz z miesięczną heatmapą, filtrem książki i sesjami po kliknięciu daty.
 - Jeden aktywny pomiar w całej aplikacji. Start, pauza, wznowienie, koniec i reset.
 - Dwa niezależne wymagania strony przed/po sesji, domyślnie włączone. Strony **0 i 1 są poprawne**.
 - Ostrzeżenie przy cofnięciu strony, późniejsza edycja stron i czasu sesji.
 - Trwały stoper z zegarem monotonicznym, odtwarzanie po zamknięciu procesu i obsługa restartu telefonu.
-- Osobny zwykły timer, domyślnie zablokowany, z własną historią.
+- Osobny zwykły stoper, domyślnie zablokowany, z własną historią.
+- Systemowe powiadomienie z licznikiem, pauzą i wznowieniem; prośba o Live Update na Androidzie 16+.
 - Pełne kopie ZIP, opcjonalnie AES-256, walidowane i przywracane transakcyjnie.
 - Rzeczywista integracja Google Drive `appDataFolder`, **wymagająca konfiguracji OAuth właściciela**.
 - Jasny/ciemny/systemowy motyw i opcjonalne niewygaszanie ekranu w aplikacji.
@@ -82,6 +90,24 @@ Po wygaśnięciu można zakończyć już aktywny zwykły pomiar, a wznowienie wy
 
 ### Hasło administratora i jego zmiana
 
+**Najprościej na Windows:** otwórz PowerShell w katalogu repo i uruchom:
+
+```powershell
+.\tools\set-admin-password.ps1
+```
+
+Wpisz dwa razy własne hasło (minimum 20 znaków; nie będzie widoczne). Skrypt przygotuje
+Argon2 i zbuduje APK w `app/build/outputs/apk/debug/app-debug.apk`. Zainstaluj je jako
+aktualizację i wpisz to hasło w **Ustawienia → Odblokowanie zwykłego stopera**.
+Odblokowanie będzie trwałe, także po zamknięciu aplikacji i restarcie telefonu.
+Na tym komputerze skrypt wykrywa przygotowane Python i JDK; na innym potrzebne są
+Python 3, JDK 21 i Android SDK 36. Podpis aktualizacji musi odpowiadać instalacji.
+
+Opcja `.\tools\set-admin-password.ps1 -Generate` losuje hasło i przekazuje je do schowka,
+żeby zapisać je w menedżerze haseł. Nie wpisuj hasła w poleceniu ani w czacie.
+
+Ręczny wariant i szczegóły techniczne:
+
 W repo jest wyłącznie weryfikator **Argon2id v19, 64 MiB, 3 iteracje, 1 wątek, losowa sól 16 B**.
 Bootstrap wygenerował losowe hasło i je odrzucił — nie istnieje wspólne hasło administratora,
 które należałoby przekazywać w czacie. Przed korzystaniem z trwałego odblokowania ustaw własne:
@@ -118,10 +144,34 @@ Nie doliczamy arbitralnie czasu wyłączonego telefonu. Część od ostatniego z
 może wymagać ręcznej korekty w historii sesji; aplikacja mówi o tym wprost. Import aktywnej
 sesji z ZIP-a również zawsze przywraca ją jako wstrzymaną. Nie tworzy drugiej sesji.
 
-Nie ma usługi foreground ani stałego powiadomienia: do odtwarzania różnicy czasu nie jest
-potrzebna praca procesora w tle. Aplikacja nie żąda uprawnień do kamery ani całej pamięci;
+Nie ma usługi foreground ani cyklicznego budzenia procesora w tle. Systemowy chronometr
+w powiadomieniu odświeża czas sam. Aplikacja nie żąda uprawnień do kamery ani całej pamięci;
 zdjęcie robi zewnętrzna aplikacja aparatu przez FileProvider, pliki wybiera systemowy selektor.
-Jedynym deklarowanym uprawnieniem jest internet do opcjonalnego Drive.
+Uprawnienia: internet do okładek i opcjonalnego Drive, powiadomienia (zgoda od Androida 13)
+oraz normalne uprawnienie do promowanych powiadomień. Odrzucenie zgody nie blokuje pomiaru.
+O wyglądzie pastylki/Now Bar decyduje Android i producent; szczegóły: [SYSTEM_TIMER.md](docs/SYSTEM_TIMER.md).
+
+## Wyszukiwanie okładek
+
+W formularzu książki wpisz tytuł i wybierz **Znajdź okładkę w internecie → Szukaj okładek**.
+Wybierz jedną z maksymalnie 12 propozycji, a następnie zapisz książkę. Można zmienić tytuł
+wyszukiwania niezależnie od tytułu książki, np. na oryginalny. Nie potrzeba serwera, konta ani klucza API.
+Okładka jest pobierana z [Open Library](https://openlibrary.org), optymalizowana i kopiowana
+do prywatnego magazynu. Po zapisie działa offline i trafia do kopii ZIP.
+
+Wyszukiwanie następuje wyłącznie po naciśnięciu przycisku; wpisany tytuł trafia do Open Library.
+Zapytania są buforowane i ograniczone do jednego na ok. sekundę, podglądy pobierane po trzy.
+JSON ma limit 2 MiB, obraz 10 MiB, połączenia wyłącznie HTTPS do hostów Open Library.
+Katalog nie ma każdej książki/wydania: można użyć pliku, aparatu lub okładki zastępczej.
+
+## Wykresy i kalendarz
+
+Szczegóły książki pokazują wykres 7/30 dni, statystyki sesji, ważone tempo czytania
+i szacowany czas do końca. Brakujące lub cofnięte numery stron nie tworzą sztucznego tempa.
+Kalendarz ma filtr książki, przełączanie miesięcy i klikalną heatmapę. Pod nią zobaczysz
+konkretne książki, nazwy pomiarów, czas i zakres stron z wybranego dnia.
+Sesja jest przypisana do lokalnej daty rozpoczęcia; po przekroczeniu północy nie dzielimy
+czasu na dni, ponieważ historia nie zawiera wszystkich odcinków pauz.
 
 ## Lokalne kopie zapasowe
 
@@ -172,7 +222,8 @@ Testy jednostkowe i integracyjne obejmują zegary, pauzę, restart, pojedynczą 
 wszystkie kombinacje pytań o strony, rotację weryfikatora, limit 168 godzin, cooldown, migrację,
 pełny roundtrip biblioteki z okładkami, AES-256, błędne hasło, uszkodzenie i Zip Slip.
 Testy Compose obejmują natywne dialogi stron oraz scenariusz biblioteki, timera, historii
-i motywów w Robolectric. Przygotowany test urządzeniowy obejmuje też odtworzenie Activity
+i motywów w Robolectric, kalendarz, wykresy i wybór okładki. Testy powiadomień działają
+na API 35 i 36. Przygotowany test urządzeniowy obejmuje też odtworzenie Activity
 i wiele timerów. Wykonane próby i ograniczenia środowiska są opisane w raporcie weryfikacji.
 
 Zgodnie z decyzją właściciela projekt nie używa GitHub Actions. Weryfikacja jest lokalna.
@@ -185,8 +236,9 @@ Nie trzeba zmieniać projektu ani wyłączać testów.
 
 ## Struktura i rozwój
 
-- `data/`: Room, modele UUID i pliki okładek.
-- `domain/`: zegar monotoniczny i walidacja stron.
+- `data/`: Room, modele UUID, pliki okładek i klient Open Library.
+- `domain/`: zegar monotoniczny, walidacja stron i statystyki.
+- `notifications/`: systemowy chronometr, Live Updates i działania powiadomienia.
 - `security/`: Argon2id, 168 godzin i ograniczanie prób.
 - `backup/`: ZIP, walidacja, transakcyjny import, rzeczywisty klient Drive.
 - `ui/`: Compose, ViewModel, nawigacja, motywy i dialogi.

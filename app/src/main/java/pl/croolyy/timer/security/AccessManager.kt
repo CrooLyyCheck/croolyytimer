@@ -108,7 +108,7 @@ class AccessManager(context: Context, private val clock: AppClock,
             }
             publish(p, now)
             require(user || admin) { "Nieprawidłowe hasło." }
-            if (mutable.value.permanent) "Timer odblokowany na stałe" else "Timer odblokowany na 7 dni"
+            if (mutable.value.permanent) "Stoper odblokowany na stałe" else "Stoper odblokowany na 7 dni"
         } finally { password.fill('\u0000') }
     }
 }

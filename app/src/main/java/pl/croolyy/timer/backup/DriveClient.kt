@@ -26,7 +26,7 @@ class DriveClient(private val token: String) {
         if (c.responseCode == 401) throw DriveAuthorizationExpired()
         require(c.responseCode in 200..299) {
             when (c.responseCode) {
-                403 -> "Google Drive odmówił dostępu. Sprawdź zgodę i konfigurację OAuth."
+                403 -> "Google Drive odmówił dostępu. Rozłącz konto i spróbuj połączyć je ponownie."
                 404 -> "Kopia nie istnieje na tym koncie."
                 429 -> "Zbyt wiele żądań. Spróbuj za chwilę."
                 else -> "Google Drive: błąd ${c.responseCode}. Spróbuj ponownie."

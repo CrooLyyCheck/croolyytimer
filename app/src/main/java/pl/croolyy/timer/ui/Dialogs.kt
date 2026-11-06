@@ -22,7 +22,7 @@ import pl.croolyy.timer.domain.validPage
     AlertDialog(onDismissRequest = onDismiss,
         title = { Text(if (start) "Na której stronie aktualnie jesteś?" else "Na której stronie skończyłeś czytać?") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(if (start) "Zacznij tam, gdzie jesteś. Strony 0 i 1 też są w porządku." else "Zapisz ostatnią stronę. Sesja jest teraz wstrzymana.")
+            if (!start) Text("Sesja jest wstrzymana. Wpisz ostatnią przeczytaną stronę.")
             OutlinedTextField(value, { value = it; error = null; acknowledged = false }, label = { Text("Numer strony") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,
                 isError = error != null, supportingText = { error?.let { Text(it) } })
@@ -81,7 +81,7 @@ import pl.croolyy.timer.domain.validPage
     var error by remember { mutableStateOf<String?>(null) }
     AlertDialog(onDismissRequest = onDismiss, title = { Text(if (creating) "Zaszyfruj kopię" else "Hasło kopii zapasowej") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(if (creating) "AES-256 · Zachowaj hasło w menedżerze haseł. Bez niego nie odzyskasz tej kopii." else "Wpisz hasło użyte do zaszyfrowania tego ZIP-a.")
+            Text(if (creating) "Zachowaj hasło w menedżerze haseł. Bez niego nie odzyskasz tej kopii." else "Wpisz hasło użyte do zaszyfrowania kopii.")
             OutlinedTextField(password, { password = it }, label = { Text("Hasło") }, visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), singleLine = true)
             if (creating) OutlinedTextField(repeated, { repeated = it }, label = { Text("Powtórz hasło") },

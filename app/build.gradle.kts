@@ -12,8 +12,8 @@ android {
         applicationId = "pl.croolyy.timer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true; buildConfig = true }
@@ -83,5 +83,7 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
+    // Android 16's Robolectric shared-memory setup needs access to JDK 21 file descriptors.
+    jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
     systemProperty("croolyy.screenshots", layout.buildDirectory.dir("reports/ui-screenshots").get().asFile.absolutePath)
 }

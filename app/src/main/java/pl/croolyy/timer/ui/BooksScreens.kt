@@ -89,7 +89,7 @@ import java.time.*
 }
 
 @Composable fun BookDetailScreen(book: Book, state: LibraryState, vm: AppViewModel, onBack: () -> Unit,
-    onEdit: () -> Unit, onStart: (BookTimer) -> Unit, onActive: () -> Unit) {
+    onEdit: () -> Unit, onStart: (BookTimer) -> Unit, onActive: () -> Unit, onCalendar: () -> Unit) {
     var addingTimer by remember { mutableStateOf(false) }
     var rename by remember { mutableStateOf<BookTimer?>(null) }
     var deleteTimer by remember { mutableStateOf<BookTimer?>(null) }
@@ -137,10 +137,11 @@ import java.time.*
             Text(if (pace != null) "Średnie tempo: ${"%.1f".format(Polish, pace)} min/stronę" else "Tempo pojawi się po sesji z pełnymi danymi stron.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } }
-        item { SectionTitle("Twoje timery", "Osobny rytm na każdą okazję.") {
-            IconButton({ addingTimer = true }) { Icon(Icons.Outlined.Add, "Dodaj timer") }
+        item { BookStatistics(book, sessions, onCalendar) }
+        item { SectionTitle("Twoje stopery", "Osobny rytm na każdą okazję.") {
+            IconButton({ addingTimer = true }) { Icon(Icons.Outlined.Add, "Dodaj stoper") }
         } }
-        if (timers.isEmpty()) item { Text("Dodaj pierwszy timer tej książki.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (timers.isEmpty()) item { Text("Dodaj pierwszy stoper tej książki.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         items(timers, key = { it.id }) { timer ->
             val timerSessions = sessions.filter { it.timerId == timer.id }
             SoftCard {
@@ -149,28 +150,28 @@ import java.time.*
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text(timer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Text(book.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${shortTime(timerSessions.sumOf { it.durationMs })} · ${timerSessions.size} sesji", style = MaterialTheme.typography.bodySmall)
+                        Text("${shortTime(timerSessions.sumOf { it.durationMs })} · ${sessionCount(timerSessions.size)}", style = MaterialTheme.typography.bodySmall)
                     }
-                    IconButton({ rename = timer }) { Icon(Icons.Outlined.Edit, "Zmień nazwę timera ${timer.name}", Modifier.size(18.dp)) }
-                    IconButton({ deleteTimer = timer }) { Icon(Icons.Outlined.DeleteOutline, "Usuń timer ${timer.name}", Modifier.size(18.dp)) }
+                    IconButton({ rename = timer }) { Icon(Icons.Outlined.Edit, "Zmień nazwę stopera ${timer.name}", Modifier.size(18.dp)) }
+                    IconButton({ deleteTimer = timer }) { Icon(Icons.Outlined.DeleteOutline, "Usuń stoper ${timer.name}", Modifier.size(18.dp)) }
                 }
                 Button(onClick = { if (state.active?.timerId == timer.id) onActive() else onStart(timer) }, Modifier.fillMaxWidth()) {
                     Icon(Icons.Outlined.PlayArrow, null); Spacer(Modifier.width(6.dp))
                     Text(if (state.active?.timerId == timer.id) "Wróć do sesji" else "Rozpocznij czytanie")
                 }
                 if (timerSessions.isNotEmpty()) TextButton(onClick = { timerFilter = if (timerFilter == timer.id) null else timer.id }) {
-                    Text(if (timerFilter == timer.id) "Pokaż całą historię" else "Pokaż historię tego timera")
+                    Text(if (timerFilter == timer.id) "Pokaż całą historię" else "Pokaż historię tego stopera")
                 }
             }
         }
         item { SectionTitle("Historia czytania", timerFilter?.let { timers.find { t -> t.id == it }?.name } ?: "Wszystkie sesje tej książki") }
-        if (filtered.isEmpty()) item { EmptyState(Icons.Outlined.History, "Pierwszy rozdział przed Tobą", "Uruchom timer, a Twoja historia pojawi się tutaj.") }
+        if (filtered.isEmpty()) item { EmptyState(Icons.Outlined.History, "Pierwszy rozdział przed Tobą", "Uruchom stoper, a Twoja historia pojawi się tutaj.") }
         items(filtered, key = { it.id }) { session ->
             SoftCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(dateTime(session.startedAt), style = MaterialTheme.typography.labelLarge)
-                        Text(timers.find { it.id == session.timerId }?.name ?: "Timer", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                        Text(timers.find { it.id == session.timerId }?.name ?: "Stoper", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                     IconButton({ editSession = session }) { Icon(Icons.Outlined.Edit, "Popraw sesję", Modifier.size(18.dp)) }
                     IconButton({ deleteSession = session }) { Icon(Icons.Outlined.DeleteOutline, "Usuń sesję", Modifier.size(18.dp)) }
@@ -183,12 +184,12 @@ import java.time.*
             }
         }
     }
-    if (addingTimer) NameDialog("Nowy timer", onDismiss = { addingTimer = false }) { vm.runAction { vm.repository.addTimer(book.id, it) } }
-    rename?.let { timer -> NameDialog("Zmień nazwę timera", timer.name, { rename = null }) { vm.runAction { vm.repository.renameTimer(timer, it) } } }
-    deleteTimer?.let { timer -> ConfirmDialog("Usunąć timer?", "Zniknie timer „${timer.name}” i jego historia sesji.", onDismiss = { deleteTimer = null }) {
+    if (addingTimer) NameDialog("Nowy stoper", onDismiss = { addingTimer = false }) { vm.runAction { vm.repository.addTimer(book.id, it) } }
+    rename?.let { timer -> NameDialog("Zmień nazwę stopera", timer.name, { rename = null }) { vm.runAction { vm.repository.renameTimer(timer, it) } } }
+    deleteTimer?.let { timer -> ConfirmDialog("Usunąć stoper?", "Zniknie stoper „${timer.name}” i jego historia sesji.", onDismiss = { deleteTimer = null }) {
         vm.runAction { vm.repository.deleteTimer(timer.id); if (timerFilter == timer.id) timerFilter = null }
     } }
-    if (deleteBook) ConfirmDialog("Usunąć książkę?", "Usuniesz „${book.title}”, wszystkie jej timery i historię czytania.", onDismiss = { deleteBook = false }) {
+    if (deleteBook) ConfirmDialog("Usunąć książkę?", "Usuniesz „${book.title}”, wszystkie jej stopery i historię czytania.", onDismiss = { deleteBook = false }) {
         vm.runAction { vm.repository.deleteBook(book.id); onBack() }
     }
     editSession?.let { EditSessionDialog(it, { editSession = null }) { edited -> vm.runAction { vm.repository.editSession(edited) } } }
@@ -208,6 +209,7 @@ import java.time.*
     var cameraUri by rememberSaveable { mutableStateOf<String?>(null) }
     var cameraPath by rememberSaveable { mutableStateOf<String?>(null) }
     var clearCover by rememberSaveable { mutableStateOf(false) }
+    var coverSearch by rememberSaveable { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { selected ->
@@ -231,9 +233,15 @@ import java.time.*
         OutlinedTextField(current, { current = it }, Modifier.fillMaxWidth(), label = { Text("Aktualna strona") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
         SoftCard {
             Text("Okładka", style = MaterialTheme.typography.titleLarge)
-            Text(when { uri != null -> "Wybrano zdjęcie. Zostanie skopiowane do aplikacji przy zapisie."
+            val preview = uri?.let(Uri::parse)?.takeIf { it.scheme == "file" }?.path?.let(::File)
+                ?: existing?.cover?.takeUnless { clearCover || uri != null }?.let(vm.app.covers::file)
+            Cover(Book(id = existing?.id ?: draftId, title = title.ifBlank { "Twoja książka" }, author = author), preview, Modifier.width(100.dp).height(150.dp).align(Alignment.CenterHorizontally))
+            Text(when { uri != null -> "Wybrano nową okładkę."
                 existing?.cover != null && !clearCover -> "Książka ma własną okładkę."
                 else -> "Bez zdjęcia stworzymy dla Ciebie autorską okładkę." }, style = MaterialTheme.typography.bodyMedium)
+            Button({ coverSearch = true }, Modifier.fillMaxWidth(), enabled = title.trim().length >= 2 && !saving) {
+                Icon(Icons.Outlined.TravelExplore, null); Spacer(Modifier.width(8.dp)); Text("Znajdź okładkę w internecie")
+            }
             OutlinedButton(onClick = { gallery.launch(arrayOf("image/*")) }, Modifier.fillMaxWidth()) {
                 Icon(Icons.Outlined.PhotoLibrary, null); Spacer(Modifier.width(8.dp)); Text("Wybierz zdjęcie lub plik")
             }
@@ -269,5 +277,8 @@ import java.time.*
         }, Modifier.fillMaxWidth().height(54.dp), enabled = !saving) {
             if (saving) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text("Zapisz książkę")
         }
+    }
+    if (coverSearch) CoverSearchDialog(title, vm.app.coverSearch, { coverSearch = false }) { selected ->
+        uri = Uri.fromFile(selected).toString(); clearCover = false; coverSearch = false
     }
 }
