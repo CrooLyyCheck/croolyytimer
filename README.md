@@ -39,7 +39,7 @@ stabilnego zestawu, bez wersji alpha/beta i bez dynamicznych `+`.
 
 Linux/macOS: `./gradlew assembleDebug`. Wynik: `app/build/outputs/apk/debug/app-debug.apk`.
 Instalacja: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
-Artefakty z GitHub Actions są dostępne w zakładce Actions prywatnego repozytorium.
+Gotowe APK można pobrać z wydań prywatnego repozytorium.
 
 ### Podpisany release
 
@@ -58,7 +58,7 @@ Następnie uruchom:
 
 Wynik: `app/build/outputs/apk/release/`. Bez zmiennych podpisu powstaje
 `app-release-unsigned.apk`; nie jest to instalowalny podpisany release. Debug jest podpisany
-automatycznie. CI sprawdza również kompilację release, ale nie ma dostępu do klucza właściciela.
+automatycznie. Testy i kompilację uruchamia się lokalnie; projekt nie używa GitHub Actions.
 
 ## Odblokowanie zwykłego timera
 
@@ -152,7 +152,7 @@ Pełna instrukcja: [docs/GOOGLE_DRIVE.md](docs/GOOGLE_DRIVE.md).
 Wymagane są projekt Google Cloud, Drive API, ekran zgody oraz klient Android dla pakietu
 i SHA certyfikatu. Bez nich połączenie nie zadziała. Biblioteka i lokalne kopie pozostają niezależne.
 
-## Testy i CI
+## Lokalne testy
 
 ```powershell
 .\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleRelease
@@ -163,12 +163,12 @@ python -m unittest discover -s tools/tests -v
 Testy jednostkowe i integracyjne obejmują zegary, pauzę, restart, pojedynczą aktywną sesję,
 wszystkie kombinacje pytań o strony, rotację weryfikatora, limit 168 godzin, cooldown, migrację,
 pełny roundtrip biblioteki z okładkami, AES-256, błędne hasło, uszkodzenie i Zip Slip.
-Test Compose na emulatorze przechodzi od zablokowanego ekranu przez dodanie książki i timerów
-do sesji od stron 0 i 1, odtworzenia Activity i niezależnych przełączników.
+Testy Compose obejmują natywne dialogi stron oraz scenariusz biblioteki, timera, historii
+i motywów w Robolectric. Przygotowany test urządzeniowy obejmuje też odtworzenie Activity
+i wiele timerów. Wykonane próby i ograniczenia środowiska są opisane w raporcie weryfikacji.
 
-GitHub Actions buduje debug/release, uruchamia testy, lint i oddzielnie testy na emulatorze API 35.
-APK oraz raporty są artefaktami workflow. Aktualny zakres wykonanej weryfikacji jest w
-[docs/VALIDATION.md](docs/VALIDATION.md).
+Zgodnie z decyzją właściciela projekt nie używa GitHub Actions. Weryfikacja jest lokalna.
+Aktualny zakres wykonanej weryfikacji jest w [docs/VALIDATION.md](docs/VALIDATION.md).
 
 Na Windows uruchamianym w pakiecie MSIX Java może zgłosić `Unable to establish loopback connection`.
 Pomaga utworzenie krótkiego katalogu tymczasowego i ustawienie lokalnie
