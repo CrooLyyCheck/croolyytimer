@@ -1,9 +1,11 @@
 package pl.croolyy.timer
 
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.activity.ComponentActivity
+import androidx.lifecycle.ViewModelProvider
+import android.graphics.Canvas
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
@@ -13,24 +15,46 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import pl.croolyy.timer.data.*
+import pl.croolyy.timer.domain.AppClock
+import pl.croolyy.timer.domain.TimeMark
+import pl.croolyy.timer.ui.AppViewModel
+import pl.croolyy.timer.ui.CrooApp
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [29], application = CrooLyyApp::class, qualifiers = "w393dp-h850dp-xxhdpi")
+@Config(sdk = [35], application = UiTestApp::class, qualifiers = "w393dp-h850dp-xxhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class NativeUiTest {
-    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val repository get() = (compose.activity.application as CrooLyyApp).repository
-    private fun waitFor(condition: suspend () -> Boolean) = compose.waitUntil(15000) { runBlocking { condition() } }
+    private fun waitFor(condition: suspend () -> Boolean) {
+        try { compose.waitUntil(15000) { runBlocking { condition() } } }
+        catch (e: Throwable) { throw AssertionError(runBlocking {
+            "active=${repository.dao.active()}, sessions=${repository.dao.allSessions()}, settings=${repository.dao.settings()}"
+        }, e) }
+    }
     private fun screenshot(name: String) {
-        val directory = File(System.getProperty("croolyy.screenshots")).apply { mkdirs() }
-        compose.onRoot().captureToImage().asAndroidBitmap().let { bitmap ->
+        val directory = File(requireNotNull(System.getProperty("croolyy.screenshots"))).apply { mkdirs() }
+        compose.runOnIdle {
+            val root = compose.activity.window.decorView
+            val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+            root.draw(Canvas(bitmap))
             File(directory, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
         }
     }
-    @Test fun nativeScreensReadFromZeroAndOneSaveHistoryAndSwitchTheme() {
+    @Test fun nativeLibraryTimerHistoryAndThemeWithPagePromptsDisabled() {
+        val vm = ViewModelProvider(compose.activity)[AppViewModel::class.java]
+        compose.setContent { CrooApp(vm, {}, {}) }
         compose.onNodeWithText("Przejdź do ustawień").assertExists()
         screenshot("01-timer-locked")
+        compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
+        val before = "Wymagaj numeru strony przed rozpoczęciem timera"
+        val after = "Wymagaj numeru strony po zakończeniu timera"
+        compose.onNodeWithTag(before).performScrollTo().assertIsOn().performClick()
+        waitFor { repository.dao.settings()?.askBefore == false }
+        compose.onNodeWithTag(after).performScrollTo().assertIsOn().performClick()
+        waitFor { repository.dao.settings()?.askAfter == false }
         compose.onNodeWithText("Książki", useUnmergedTree = true).performClick()
         compose.onNodeWithText("Dodaj pierwszą książkę").performScrollTo().performClick()
         compose.onNodeWithText("Tytuł książki *").performTextInput("Sztuka uważnego życia")
@@ -41,40 +65,39 @@ class NativeUiTest {
         screenshot("02-library-light")
         compose.onNodeWithText("Sztuka uważnego życia").performClick()
         screenshot("03-book-detail")
-        compose.onNodeWithText("Rozpocznij czytanie").performScrollTo().performClick()
-        compose.onNodeWithText("Numer strony").performTextClearance()
-        compose.onNodeWithText("Numer strony").performTextInput("0")
-        compose.onNodeWithText("Rozpocznij", useUnmergedTree = true).performClick()
-        waitFor { repository.dao.active()?.startPage == 0 }
+        compose.onNodeWithText("Czytaj teraz").performClick()
+        waitFor { repository.dao.active() != null }
         screenshot("04-reading-timer")
         compose.onNodeWithText("Pauza").performScrollTo().performClick()
         waitFor { repository.dao.active()?.running == false }
         compose.onNodeWithText("Wznów").performScrollTo().performClick()
         waitFor { repository.dao.active()?.running == true }
         compose.onNodeWithText("Zakończ").performScrollTo().performClick()
-        compose.onNodeWithText("Numer strony").performTextClearance()
-        compose.onNodeWithText("Numer strony").performTextInput("1")
-        compose.onNodeWithText("Zapisz sesję").performClick()
         waitFor { repository.dao.allSessions().size == 1 }
-        assertEquals(0, runBlocking { repository.dao.allSessions().single().startPage })
-        assertEquals(1, runBlocking { repository.dao.allSessions().single().endPage })
+        assertNull(runBlocking { repository.dao.allSessions().single().startPage })
+        assertNull(runBlocking { repository.dao.allSessions().single().endPage })
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(6, java.util.concurrent.TimeUnit.SECONDS)
+        compose.mainClock.advanceTimeBy(6000)
         compose.onNodeWithText("Książki", useUnmergedTree = true).performClick()
         compose.onNodeWithText("Sztuka uważnego życia").performClick()
-        compose.onNodeWithText("Rozpocznij czytanie").performScrollTo().performClick()
-        compose.onNodeWithText("Numer strony").performTextClearance()
-        compose.onNodeWithText("Numer strony").performTextInput("1")
-        compose.onNodeWithText("Rozpocznij", useUnmergedTree = true).performClick()
-        waitFor { repository.dao.active()?.startPage == 1 }
+        compose.onNodeWithText("Czytaj teraz").performClick()
+        waitFor { repository.dao.active() != null }
         compose.onNodeWithText("Zakończ").performScrollTo().performClick()
-        compose.onNodeWithText("Zapisz sesję").performClick()
         waitFor { repository.dao.allSessions().size == 2 }
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(6, java.util.concurrent.TimeUnit.SECONDS)
+        compose.mainClock.advanceTimeBy(6000)
         compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
-        compose.onNodeWithTag("Wymagaj numeru strony przed rozpoczęciem timera").performScrollTo().performClick()
-        waitFor { repository.dao.settings()?.askBefore == false }
-        compose.onNodeWithTag("Wymagaj numeru strony po zakończeniu timera").assertIsOn()
+        compose.onNodeWithTag(after).performScrollTo().performClick()
+        waitFor { repository.dao.settings()?.askAfter == true }
+        compose.onNodeWithTag(before).assertIsOff()
         compose.onNodeWithText("Ciemny").performScrollTo().performClick()
         waitFor { repository.dao.settings()?.theme == "dark" }
         compose.onNodeWithText("Książki", useUnmergedTree = true).performClick()
         screenshot("05-library-dark")
     }
+}
+
+/** A deterministic dependency for UI tests; production always uses AndroidClock. */
+class UiTestApp : CrooLyyApp() {
+    override val clock = AppClock { TimeMark(1_793_952_000_000, 1_000, 1) }
 }

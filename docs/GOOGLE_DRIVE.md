@@ -28,6 +28,11 @@ Bez tej zewnętrznej konfiguracji Google może zwrócić błąd konfiguracji/dev
 Nie da się potwierdzić działania OAuth na koncie właściciela bez utworzenia klienta w jego projekcie.
 Ta część wymaga sprawdzenia na skonfigurowanym koncie i nie jest przedstawiana jako zweryfikowana.
 
+Certyfikat debug dostarczonego APK 1.0.0 ma SHA-1:
+`FD:21:F8:38:94:E1:08:8B:BC:22:18:86:FF:28:C1:B3:77:0A:F9:32`.
+Użyj go razem z pakietem `pl.croolyy.timer`, jeśli konfigurujesz dokładnie ten APK.
+Po zmianie certyfikatu dodaj odpowiedni nowy klient Android.
+
 ## Zachowanie aplikacji
 
 - Jedyny zakres to `drive.appdata`. Brak uprawnień do całego Dysku.

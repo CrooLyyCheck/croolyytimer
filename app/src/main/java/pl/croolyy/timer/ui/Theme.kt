@@ -3,7 +3,7 @@ package pl.croolyy.timer.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.activity.compose.LocalActivity
@@ -18,7 +18,7 @@ val Cream = Color(0xFFF7F4EB)
 val Gold = Color(0xFFB28C48)
 private val LightColors = lightColorScheme(
     primary = Pine, onPrimary = Color.White, primaryContainer = Color(0xFFDFE9D9), onPrimaryContainer = Color(0xFF16392C),
-    secondary = Color(0xFF75603B), secondaryContainer = Color(0xFFF0E4C8),
+    secondary = Color(0xFF75603B), secondaryContainer = Color(0xFFF0E4C8), onSecondaryContainer = Color(0xFF44371F),
     background = Cream, onBackground = Color(0xFF232D27),
     surface = Color(0xFFFFFCF5), onSurface = Color(0xFF232D27),
     surfaceVariant = Color(0xFFECEDE2), onSurfaceVariant = Color(0xFF5E695E),
@@ -27,7 +27,7 @@ private val LightColors = lightColorScheme(
 private val DarkColors = darkColorScheme(
     primary = Color(0xFFB7D4AD), onPrimary = Color(0xFF19382B),
     primaryContainer = Color(0xFF2D4939), onPrimaryContainer = Color(0xFFDAECD5),
-    secondary = Color(0xFFD9BD85), secondaryContainer = Color(0xFF50432C),
+    secondary = Color(0xFFD9BD85), secondaryContainer = Color(0xFF50432C), onSecondaryContainer = Color(0xFFF0E2C4),
     background = Color(0xFF141D18), onBackground = Color(0xFFE8EBDD),
     surface = Color(0xFF1D2821), onSurface = Color(0xFFE8EBDD),
     surfaceVariant = Color(0xFF2C382E), onSurfaceVariant = Color(0xFFBBC6B5),
@@ -38,13 +38,14 @@ private val DarkColors = darkColorScheme(
     val dark = when (theme) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
     val view = LocalView.current
     val activity = LocalActivity.current
-    SideEffect {
+    DisposableEffect(activity, view, dark) {
         activity?.window?.let { window ->
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !dark
                 isAppearanceLightNavigationBars = !dark
             }
         }
+        onDispose { }
     }
     MaterialTheme(colorScheme = if (dark) DarkColors else LightColors,
         typography = Typography(

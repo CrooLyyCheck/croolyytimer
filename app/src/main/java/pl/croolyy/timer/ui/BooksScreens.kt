@@ -19,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,7 +103,7 @@ import java.time.*
     val time = sessions.sumOf { it.durationMs }
     val pageSessions = sessions.filter { (it.pages ?: 0) > 0 && it.durationMs > 0 }
     val pace = if (pageSessions.isNotEmpty()) pageSessions.sumOf { it.durationMs } / 60_000.0 / pageSessions.sumOf { it.pages!! } else null
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    LazyColumn(Modifier.fillMaxSize().testTag("book-detail-list"), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         item { Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Wróć") }
             Spacer(Modifier.weight(1f))
@@ -113,6 +114,13 @@ import java.time.*
             Cover(book, book.cover?.let { vm.app.covers.file(it) }, Modifier.width(146.dp).height(219.dp))
             Text(book.title, style = MaterialTheme.typography.headlineLarge, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Text(book.author.ifBlank { "Autor niepodany" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            timers.firstOrNull()?.let { primary ->
+                Button(onClick = { if (state.active?.timerId == primary.id) onActive() else onStart(primary) },
+                    modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                    Icon(Icons.Outlined.PlayArrow, null); Spacer(Modifier.width(8.dp))
+                    Text(if (state.active?.timerId == primary.id) "Wróć do czytania" else "Czytaj teraz")
+                }
+            }
             FilterChip(book.finished, { vm.runAction { vm.repository.saveBook(book.copy(finished = !book.finished)) } },
                 label = { Text(if (book.finished) "Książka ukończona" else "Oznacz jako ukończoną") },
                 leadingIcon = { Icon(if (book.finished) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked, null, Modifier.size(18.dp)) })

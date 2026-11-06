@@ -49,7 +49,22 @@ class CoverStore(private val context: Context) {
                 require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Nieprawidłowy plik zdjęcia." }
                 var sample = 1
                 while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 1400) sample *= 2
-                requireNotNull(BitmapFactory.decodeFile(sourceFile.path, BitmapFactory.Options().apply { inSampleSize = sample }))
+                val decoded = requireNotNull(BitmapFactory.decodeFile(sourceFile.path, BitmapFactory.Options().apply { inSampleSize = sample }))
+                val orientation = runCatching { android.media.ExifInterface(sourceFile.path)
+                    .getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL) }.getOrDefault(1)
+                val matrix = android.graphics.Matrix().apply {
+                    when (orientation) {
+                        2 -> postScale(-1f, 1f)
+                        3 -> postRotate(180f)
+                        4 -> postScale(1f, -1f)
+                        5 -> { postRotate(90f); postScale(-1f, 1f) }
+                        6 -> postRotate(90f)
+                        7 -> { postRotate(270f); postScale(-1f, 1f) }
+                        8 -> postRotate(270f)
+                    }
+                }
+                if (matrix.isIdentity) decoded else Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
+                    .also { if (it !== decoded) decoded.recycle() }
             }
             val bytes = java.io.ByteArrayOutputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 88, out); out.toByteArray() }
             bitmap.recycle()
@@ -64,9 +79,14 @@ class CoverStore(private val context: Context) {
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         require(bounds.outWidth in 1..4096 && bounds.outHeight in 1..4096) { "Nieprawidłowy format lub rozmiar okładki." }
         val target = file(name)
-        if (!target.exists()) {
+        if (!target.exists() || sha256File(target) + ".jpg" != name) {
             val temp = File.createTempFile("install-", ".tmp", directory)
-            try { temp.writeBytes(bytes); check(temp.renameTo(target)) { "Nie można zapisać okładki." } }
+            try {
+                temp.writeBytes(bytes)
+                try { java.nio.file.Files.move(temp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING) }
+                catch (_: java.nio.file.AtomicMoveNotSupportedException) { java.nio.file.Files.move(temp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING) }
+            }
             finally { temp.delete() }
         }
     }

@@ -85,23 +85,26 @@ import pl.croolyy.timer.domain.SessionClock
     var reset by remember { mutableStateOf(false) }
     val book = state.books.find { it.id == active.bookId }
     val timer = state.timers.find { it.id == active.timerId }
+    val ringColor = MaterialTheme.colorScheme.primary.copy(alpha = .18f)
     val pulse by animateFloatAsState(if (active.running) 1f else .94f, spring(stiffness = Spring.StiffnessLow), label = "Rytm timera")
-    Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(22.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (book != null) {
-            Cover(book, book.cover?.let { vm.app.covers.file(it) }, Modifier.width(128.dp).height(192.dp))
-            Text(book.title, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-            Text(timer?.name ?: "Czytanie", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Cover(book, book.cover?.let { vm.app.covers.file(it) }, Modifier.width(84.dp).height(126.dp))
+            Text(book.title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center,
+                maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text(timer?.name ?: "Czytanie", color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
-        Box(Modifier.sizeIn(maxWidth = 360.dp).fillMaxWidth().aspectRatio(1.35f).scale(pulse), contentAlignment = Alignment.Center) {
+        Box(Modifier.sizeIn(maxWidth = 360.dp).fillMaxWidth().aspectRatio(1.5f).scale(pulse), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
-                drawCircle(MaterialThemeColorHack, radius = size.minDimension * .45f,
+                drawCircle(ringColor, radius = size.minDimension * .45f,
                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx()))
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(if (active.running) "TERAZ JEST TWÓJ CZAS" else "CHWILA PRZERWY", fontSize = 10.sp, letterSpacing = 2.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(duration(SessionClock.duration(active, mark)), fontSize = 43.sp, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
+                Text(duration(SessionClock.duration(active, mark)), fontSize = 40.sp, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.primary)
                 if (book != null) Text("Od strony ${active.startPage ?: "—"}", style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -123,10 +126,8 @@ import pl.croolyy.timer.domain.SessionClock
     }
 }
 
-private val MaterialThemeColorHack = Color(0x665F8064)
-
 @Composable fun FocusScreen(state: LibraryState, vm: AppViewModel, onFinish: () -> Unit, onBooks: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Text("Zostań między stronami", style = MaterialTheme.typography.headlineMedium)
         state.active?.let { TimerFace(it, state, vm, onFinish) } ?: EmptyState(Icons.Outlined.CheckCircle,
             "Dobrze wykorzystany czas", "Sesja zakończona. Twoja historia czeka w bibliotece.") {

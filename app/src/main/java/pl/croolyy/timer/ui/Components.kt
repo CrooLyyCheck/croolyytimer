@@ -58,7 +58,9 @@ fun dateTime(time: Long): String = Instant.ofEpochMilli(time).atZone(ZoneId.syst
     }
     val palettes = listOf(Color(0xFF49634D), Color(0xFF765748), Color(0xFF4F6073), Color(0xFF766449), Color(0xFF5E546A))
     val base = palettes[(book.id.hashCode() and Int.MAX_VALUE) % palettes.size]
-    Box(modifier.clip(RoundedCornerShape(8.dp)).background(base)) {
+    BoxWithConstraints(modifier.clip(RoundedCornerShape(8.dp)).background(base)) {
+        val small = maxWidth < 60.dp
+        val compact = maxWidth < 100.dp
         if (bitmap != null) Image(bitmap!!, "Okładka: ${book.title}", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         else {
             Canvas(Modifier.fillMaxSize()) {
@@ -66,15 +68,18 @@ fun dateTime(time: Long): String = Instant.ofEpochMilli(time).atZone(ZoneId.syst
                 drawRect(Color.Black.copy(alpha = .13f), size = androidx.compose.ui.geometry.Size(size.width * .08f, size.height))
                 drawCircle(Color(0xFFE3D6AD).copy(alpha = .16f), size.width * .65f,
                     center = androidx.compose.ui.geometry.Offset(size.width * .9f, size.height * .78f))
-                drawLine(Color(0xFFE3D6AD).copy(alpha = .5f), androidx.compose.ui.geometry.Offset(size.width * .2f, size.height * .2f),
-                    androidx.compose.ui.geometry.Offset(size.width * .8f, size.height * .2f), 2f)
             }
-            Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                Text(book.title, color = Color(0xFFF9F1DD), fontFamily = FontFamily.Serif, fontSize = 15.sp,
-                    lineHeight = 18.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
-                Icon(Icons.Outlined.LocalFlorist, null, tint = Color(0xFFD8C99E), modifier = Modifier.align(Alignment.CenterHorizontally).size(24.dp))
-                Text(book.author.ifBlank { "CROOLYY LIBRARY" }, color = Color(0xFFE8DECB), fontSize = 8.sp,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis, letterSpacing = 1.sp)
+            Column(Modifier.fillMaxSize().padding(horizontal = if (small) 5.dp else if (compact) 8.dp else 10.dp,
+                vertical = if (small) 6.dp else if (compact) 10.dp else 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Text(book.title, color = Color(0xFFF9F1DD), fontFamily = FontFamily.Serif,
+                    fontSize = if (small) 9.sp else if (compact) 12.sp else 15.sp,
+                    lineHeight = if (small) 10.sp else if (compact) 14.sp else 18.sp,
+                    maxLines = if (small) 2 else if (compact) 3 else 4, overflow = TextOverflow.Ellipsis)
+                Icon(Icons.Outlined.LocalFlorist, null, tint = Color(0xFFD8C99E), modifier = Modifier.align(Alignment.CenterHorizontally)
+                    .size(if (small) 12.dp else if (compact) 20.dp else 24.dp))
+                Text(book.author.ifBlank { "CROOLYY LIBRARY" }, color = Color(0xFFE8DECB),
+                    fontSize = if (small) 5.sp else if (compact) 7.sp else 8.sp,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, letterSpacing = if (small) .3.sp else if (compact) .6.sp else 1.sp)
             }
         }
     }

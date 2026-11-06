@@ -52,24 +52,24 @@ import pl.croolyy.timer.security.AccessState
         }
         SoftCard {
             Text("Twój sposób czytania", style = MaterialTheme.typography.titleLarge)
-            SettingSwitch("Wymagaj numeru strony przed rozpoczęciem timera", checked = settings.askBefore) { vm.settings(settings.copy(askBefore = it)) }
+            SettingSwitch("Wymagaj numeru strony przed rozpoczęciem timera", checked = settings.askBefore) { enabled -> vm.updateSettings { it.copy(askBefore = enabled) } }
             HorizontalDivider()
-            SettingSwitch("Wymagaj numeru strony po zakończeniu timera", checked = settings.askAfter) { vm.settings(settings.copy(askAfter = it)) }
+            SettingSwitch("Wymagaj numeru strony po zakończeniu timera", checked = settings.askAfter) { enabled -> vm.updateSettings { it.copy(askAfter = enabled) } }
             Text("Oba pytania działają niezależnie. Strony możesz później poprawić w historii książki.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SoftCard {
             Text("Światło i nastrój", style = MaterialTheme.typography.titleLarge)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("system" to "System", "light" to "Jasny", "dark" to "Ciemny").forEach { (key, label) ->
-                    FilterChip(settings.theme == key, { vm.settings(settings.copy(theme = key)) }, label = { Text(label) })
+                    FilterChip(settings.theme == key, { vm.updateSettings { it.copy(theme = key) } }, label = { Text(label) })
                 }
             }
-            SettingSwitch("Nie wygaszaj ekranu podczas sesji", "Dotyczy tylko widocznej aplikacji i aktywnego pomiaru.", settings.keepScreenOn) { vm.settings(settings.copy(keepScreenOn = it)) }
+            SettingSwitch("Nie wygaszaj ekranu podczas sesji", "Dotyczy tylko widocznej aplikacji i aktywnego pomiaru.", settings.keepScreenOn) { enabled -> vm.updateSettings { it.copy(keepScreenOn = enabled) } }
         }
         SoftCard {
             Text("Kopie zapasowe", style = MaterialTheme.typography.titleLarge)
             Text("Twoje książki, okładki i historia w jednym ZIP-ie.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            SettingSwitch("Zaszyfruj kopię zapasową hasłem", "AES-256 · hasło podasz przy tworzeniu każdej kopii.", settings.encryptBackup) { vm.settings(settings.copy(encryptBackup = it)) }
+            SettingSwitch("Zaszyfruj kopię zapasową hasłem", "AES-256 · hasło podasz przy tworzeniu każdej kopii.", settings.encryptBackup) { enabled -> vm.updateSettings { it.copy(encryptBackup = enabled) } }
             if (!settings.encryptBackup) Text("Każda osoba mająca niezaszyfrowany plik ZIP może odczytać zawarte w nim dane.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onExport, Modifier.fillMaxWidth()) { Icon(Icons.Outlined.FileUpload, null); Spacer(Modifier.width(8.dp)); Text("Utwórz kopię zapasową") }
             OutlinedButton(onImport, Modifier.fillMaxWidth()) { Icon(Icons.Outlined.FileDownload, null); Spacer(Modifier.width(8.dp)); Text("Przywróć kopię zapasową") }

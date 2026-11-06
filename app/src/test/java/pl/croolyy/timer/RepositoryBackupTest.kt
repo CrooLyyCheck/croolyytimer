@@ -92,6 +92,19 @@ class RepositoryBackupTest {
         val invalid = LibrarySnapshot(emptyList(), listOf(BookTimer(bookId = newId())), emptyList(), emptyList(), AppSettings())
         assertTrue(runCatching { archive.validate(invalid) }.isFailure)
     }
+    @Test fun validZipWithTamperedDataFailsChecksumBeforeReplacingLibrary() = runBlocking {
+        repository.saveBook(Book(title = "Oryginalna biblioteka"))
+        val snapshot = repository.snapshot()
+        val archive = File.createTempFile("tampered-", ".zip", context.cacheDir)
+        val manager = BackupManager(context, repository, CoverStore(context))
+        manager.archive.create(archive, snapshot, { error("No covers") })
+        net.lingala.zip4j.ZipFile(archive).use { zip ->
+            val params = net.lingala.zip4j.model.ZipParameters().apply { fileNameInZip = "data.json" }
+            "{}".byteInputStream().use { zip.addStream(it, params) }
+        }
+        assertTrue(runCatching { manager.restore(archive, null) {} }.isFailure)
+        assertEquals(snapshot, repository.snapshot())
+    }
     @Test fun onlyOneTimerCanRunAndPauseResumeCountsExactly() = runBlocking {
         val book = Book(title = "Czas")
         repository.saveBook(book)

@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.LocalActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -15,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.*
+import androidx.navigation.createGraph
 import pl.croolyy.timer.data.*
 import java.time.LocalDate
 
@@ -53,7 +56,7 @@ import java.time.LocalDate
     LaunchedEffect(vm) { vm.messages.collect { snack.showSnackbar(it) } }
     LaunchedEffect(staged, operation) { if (staged != null && operation == null && !restorePassword) confirmRestore = true }
     fun navigate(tab: String) {
-        nav.navigate(tab) { popUpTo(nav.graph.startDestinationId) { saveState = true }; launchSingleTop = true; restoreState = true }
+        nav.navigate(tab) { popUpTo(nav.graph.startDestinationId); launchSingleTop = true }
     }
     fun finish() {
         vm.runAction {
@@ -88,7 +91,9 @@ import java.time.LocalDate
                 }
             } }, snackbarHost = { SnackbarHost(snack) }) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
-                NavHost(nav, "timer") {
+                // Keep graph identity stable when a modal or database emission recomposes the shell.
+                // Destination content reads the live Compose State delegates captured below.
+                val graph = remember(nav, vm) { nav.createGraph(startDestination = "timer") {
                     composable("timer") { TimerScreen(state, access, vm, { navigate("settings") }, { navigate("books") }, ::finish, { nav.navigate("focus") }) }
                     composable("books") { BooksScreen(state, vm, { nav.navigate("book/$it") }, { nav.navigate("new") }) }
                     composable("book/{id}") { backStack ->
@@ -104,7 +109,10 @@ import java.time.LocalDate
                     composable("settings") { SettingsScreen(state.settings, access, vm, lastBackup, connected, backups,
                         { requestExport(false) }, { import.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
                         connectGoogle, disconnectGoogle, { requestExport(true) }) }
-                }
+                } }
+                NavHost(nav, graph,
+                    enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None }, popExitTransition = { ExitTransition.None })
             }
         }
         startTimer?.let { timer -> PageDialog(true, state.books.find { it.id == timer.bookId }?.currentPage ?: 0,

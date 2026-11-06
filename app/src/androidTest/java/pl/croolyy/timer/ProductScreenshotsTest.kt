@@ -44,7 +44,7 @@ class ProductScreenshotsTest {
             capture("02-library-light")
             compose.onNodeWithText(first.title).performClick()
             capture("03-book-detail")
-            compose.onAllNodesWithText("Rozpocznij czytanie")[0].performScrollTo().performClick()
+            compose.onNodeWithText("Czytaj teraz").performScrollTo().performClick()
             compose.onNodeWithText("Rozpocznij", useUnmergedTree = true).performClick()
             compose.waitUntil(10000) { runBlocking { app.repository.dao.active() != null } }
             runBlocking {

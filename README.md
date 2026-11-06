@@ -4,6 +4,14 @@ Natywna aplikacja Android do spokojnego mierzenia czasu czytania. Kotlin, Jetpac
 Material 3, Room, DataStore, Coroutines/Flow i Navigation Compose. Cały interfejs po polsku.
 Bez reklam, analityki i obowiązkowego konta. Android **8.0+ (API 26)**.
 
+<p align="center">
+  <img src="docs/screenshots/02-library-light.png" width="220" alt="Jasna biblioteka" />
+  <img src="docs/screenshots/04-reading-timer.png" width="220" alt="Timer czytania" />
+  <img src="docs/screenshots/05-library-dark.png" width="220" alt="Ciemna biblioteka" />
+</p>
+
+Rzeczywiste komponenty Android wyrenderowane w testach Robolectric; przykładowa biblioteka nie jest częścią APK.
+
 ## Co działa
 
 - Biblioteka: dodawanie, edycja, wyszukiwanie, ukończenie i usuwanie książek.

@@ -40,6 +40,9 @@ class LibraryRepository(val db: CrooDatabase, private val clock: AppClock) {
         dao.deleteTimer(id)
     }
     suspend fun settings(settings: AppSettings) { dao.putSettings(settings) }
+    suspend fun updateSettings(change: (AppSettings) -> AppSettings) = db.withTransaction {
+        dao.putSettings(change(dao.settings() ?: AppSettings()))
+    }
 
     suspend fun start(timerId: String?, page: Int?) = db.withTransaction {
         require(dao.active() == null) { "Masz już aktywną sesję. Najpierw ją zakończ." }

@@ -7,11 +7,12 @@ import kotlinx.coroutines.SupervisorJob
 import pl.croolyy.timer.backup.BackupManager
 import pl.croolyy.timer.data.*
 import pl.croolyy.timer.domain.AndroidClock
+import pl.croolyy.timer.domain.AppClock
 import pl.croolyy.timer.security.AccessManager
 
-class CrooLyyApp : Application() {
+open class CrooLyyApp : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val clock by lazy { AndroidClock(this) }
+    open val clock: AppClock by lazy { AndroidClock(this) }
     val database by lazy { CrooDatabase.open(this) }
     val repository by lazy { LibraryRepository(database, clock) }
     val covers by lazy { CoverStore(this) }

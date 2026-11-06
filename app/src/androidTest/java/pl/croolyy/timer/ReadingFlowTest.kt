@@ -25,10 +25,12 @@ class ReadingFlowTest {
         compose.onNodeWithText("Zapisz książkę").performScrollTo().performClick()
         waitFor { repository.dao.allBooks().isNotEmpty() }
         compose.onNodeWithText("Książka testowa").performClick()
-        compose.onNodeWithContentDescription("Dodaj timer").performScrollTo().performClick()
+        compose.onNodeWithTag("book-detail-list").performScrollToNode(hasContentDescription("Dodaj timer"))
+        compose.onNodeWithContentDescription("Dodaj timer").performClick()
         compose.onNodeWithText("Nazwa (opcjonalnie)").performTextInput("Wieczór")
         compose.onNodeWithText("Zapisz", useUnmergedTree = true).performClick()
         waitFor { repository.dao.allTimers().size == 2 }
+        compose.onNodeWithTag("book-detail-list").performScrollToNode(hasText("Rozpocznij czytanie"))
         compose.onAllNodesWithText("Rozpocznij czytanie")[0].performScrollTo().performClick()
         compose.onNodeWithText("Numer strony").performTextClearance()
         compose.onNodeWithText("Numer strony").performTextInput("0")
@@ -47,7 +49,7 @@ class ReadingFlowTest {
         assertEquals(1, runBlocking { repository.dao.allSessions().single().endPage })
         compose.onNodeWithText("Książki", useUnmergedTree = true).performClick()
         compose.onNodeWithText("Książka testowa").performClick()
-        compose.onAllNodesWithText("Rozpocznij czytanie")[0].performScrollTo().performClick()
+        compose.onNodeWithText("Czytaj teraz").performScrollTo().performClick()
         compose.onNodeWithText("Numer strony").performTextClearance()
         compose.onNodeWithText("Numer strony").performTextInput("1")
         compose.onNodeWithText("Rozpocznij", useUnmergedTree = true).performClick()

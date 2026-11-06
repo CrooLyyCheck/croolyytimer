@@ -75,6 +75,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         repository.saveBook(book.copy(cover = cover)); done()
     } }
     fun settings(settings: AppSettings) { runAction { repository.settings(settings) } }
+    fun updateSettings(change: (AppSettings) -> AppSettings) { runAction { repository.updateSettings(change) } }
     fun elapsed(active: ActiveSession) = SessionClock.duration(active, now.value)
     private fun task(label: String, body: suspend (progress: (Float) -> Unit) -> Unit) {
         if (operation.value != null) { error("Poczekaj na zakończenie bieżącej operacji."); return }
