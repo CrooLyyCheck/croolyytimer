@@ -69,6 +69,9 @@ python -m unittest discover -s tools/tests -v
   oraz brak blokowania odświeżania zegara podczas oczekiwania na sieć.
 - Skrypt przygotowania aktualizacji odczytuje i sprawdza faktyczne APK, a następnie generuje
   katalog z jego rozmiarem, SHA-256, wersją i certyfikatem. Nie publikuje nic automatycznie.
+- Po publikacji 1.2.0 sprawdzono bez logowania rzeczywisty katalog z `main`, pobrano całe APK
+  z GitHub Releases i potwierdzono jego rozmiar oraz SHA-256. Zdalny weryfikator administratora
+  ma tę samą zawartość co opublikowany plik i poprawne parametry; hasło nie było wypisywane.
 - 6 listopada 2026 wykonano rzeczywiste zapytanie Search API o „Mały Książę”: zwróciło kilka
   wydań z okładkami. Duży obraz z Covers API zwrócił HTTP 200 i 31 865 B. To próba HTTP na hoście,
   a nie test internetu i importu na fizycznym telefonie.
