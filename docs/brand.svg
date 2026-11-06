@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400">
+  <rect width="960" height="400" rx="32" fill="#F7F4EB"/>
+  <rect x="76" y="105" width="180" height="180" rx="46" fill="#244D3E"/>
+  <g transform="translate(76 105) scale(1.6667)">
+    <path d="M28 34Q41 30 54 38Q67 30 80 34V71Q67 67 54 75Q41 67 28 71Z" fill="#F7F4EB"/>
+    <path d="M54 39V68M34 42Q42 40 48 44M34 49Q42 47 48 51M34 56Q42 54 48 58" fill="none" stroke="#244D3E" stroke-width="2"/>
+    <circle cx="67" cy="59" r="12" fill="#D6B974" stroke="#244D3E" stroke-width="2.5"/>
+    <path d="M67 51V59L72 62" fill="none" stroke="#244D3E" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <text x="300" y="194" font-family="Georgia,serif" font-size="64" fill="#244D3E">CrooLyyTimer</text>
+  <text x="305" y="240" font-family="Arial,sans-serif" font-size="17" letter-spacing="4" fill="#75603B">TWÓJ CZAS MIĘDZY STRONAMI</text>
+</svg>

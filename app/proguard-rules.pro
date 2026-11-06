@@ -1,0 +1,3 @@
+-dontwarn javax.naming.**
+-dontwarn org.bouncycastle.**
+-keepattributes Signature,InnerClasses,EnclosingMethod
