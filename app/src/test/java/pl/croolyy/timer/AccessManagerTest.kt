@@ -17,6 +17,59 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], application = android.app.Application::class)
 class AccessManagerTest {
+    @Test fun waitingForTheRepositoryDoesNotBlockClockRefreshAndRotationUsesTheNewVerifier() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val file = File(context.cacheDir, "rotation-${java.util.UUID.randomUUID()}.preferences_pb")
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val store = PreferenceDataStoreFactory.create(scope = scope) { file }
+        val vector = Json.decodeFromString<AdminVerifier>(javaClass.getResource("/admin_test_vector.json")!!.readText())
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        var policy = vector
+        val access = AccessManager(context, AppClock { TimeMark(1_800_000_000_000, 1000, 1) }, storeOverride = store,
+            verifierProvider = { entered.complete(Unit); release.await(); policy })
+        try {
+            val pending = async { access.unlock("test-owner-password-do-not-use".toCharArray()) }
+            entered.await()
+            withTimeout(5_000) { access.refresh() }
+            release.complete(Unit); pending.await()
+            assertTrue(access.state.value.permanent)
+            policy = vector.copy(hash = java.util.Base64.getEncoder().encodeToString(ByteArray(32)))
+            assertTrue(runCatching { access.unlock("test-owner-password-do-not-use".toCharArray()) }.isFailure)
+            assertTrue(access.state.value.permanent)
+            policy = vector
+            access.unlock("test-owner-password-do-not-use".toCharArray())
+        } finally { release.complete(Unit); scope.cancel(); file.delete() }
+        Unit
+    }
+    @Test fun remotePasswordRotationIsFetchedForEveryAttemptAndNetworkFailureDoesNotConsumeAttempts() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val file = File(context.cacheDir, "remote-access-${java.util.UUID.randomUUID()}.preferences_pb")
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val store = PreferenceDataStoreFactory.create(scope = scope) { file }
+        val vector = Json.decodeFromString<AdminVerifier>(javaClass.getResource("/admin_test_vector.json")!!.readText())
+        var calls = 0; var offline = true
+        val access = AccessManager(context, AppClock { TimeMark(1_800_000_000_000, 1000, 1) }, storeOverride = store,
+            verifierProvider = { calls++; if (offline) throw AdminVerificationUnavailable(); vector })
+        try {
+            repeat(6) {
+                val password = "test-owner-password-do-not-use".toCharArray()
+                assertTrue(runCatching { access.unlock(password) }.exceptionOrNull() is AdminVerificationUnavailable)
+                assertTrue(password.all { it == '\u0000' })
+            }
+            offline = false
+            access.unlock("test-owner-password-do-not-use".toCharArray())
+            assertTrue(access.state.value.permanent)
+            assertEquals(7, calls)
+            access.unlock("takchce".toCharArray())
+            assertEquals(7, calls)
+            assertTrue(access.state.value.permanent)
+        } finally { scope.cancel(); file.delete() }
+    }
+    @Test fun remotePolicyRejectsExcessiveArgonParametersBeforeHashing() {
+        val body = javaClass.getResource("/admin_test_vector.json")!!.readText()
+        assertEquals(65536, RemoteAdminVerifier.parse(body).memoryKiB)
+        assertThrows(IllegalArgumentException::class.java) { RemoteAdminVerifier.parse(body.replace("65536", "262144")) }
+    }
     @Test fun sevenDaysExpiryRollbackThrottleAndPermanentUnlockPersist() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val file = File(context.cacheDir, "access-${java.util.UUID.randomUUID()}.preferences_pb")

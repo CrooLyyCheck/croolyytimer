@@ -37,6 +37,7 @@ Rzeczywiste komponenty Android wyrenderowane w testach Robolectric; przykładowa
 - Trwały stoper z zegarem monotonicznym, odtwarzanie po zamknięciu procesu i obsługa restartu telefonu.
 - Osobny zwykły stoper, domyślnie zablokowany, z własną historią.
 - Systemowe powiadomienie z licznikiem, pauzą i wznowieniem; prośba o Live Update na Androidzie 16+.
+- Sprawdzanie nowych wersji z GitHuba, pobieranie i instalacja przez system Android, bez sklepu.
 - Pełne kopie ZIP, opcjonalnie AES-256, walidowane i przywracane transakcyjnie.
 - Rzeczywista integracja Google Drive `appDataFolder`, **wymagająca konfiguracji OAuth właściciela**.
 - Jasny/ciemny/systemowy motyw i opcjonalne niewygaszanie ekranu w aplikacji.
@@ -53,7 +54,7 @@ Instrukcje budowania są przeznaczone dla właściciela i osób mających odpowi
 5. Poczekaj na Gradle Sync. Wybierz moduł `app` oraz telefon/emulator API 26+ i **Run**.
 
 Projekt zawiera Gradle Wrapper 9.4.1. Pierwszy build potrzebuje internetu do pobrania bibliotek;
-zainstalowana aplikacja działa bez internetu. Zależności są przypięte do kompatybilnego,
+biblioteka i pomiary działają bez internetu. Zależności są przypięte do kompatybilnego,
 stabilnego zestawu, bez wersji alpha/beta i bez dynamicznych `+`.
 
 ### APK debug
@@ -106,12 +107,16 @@ Po wygaśnięciu można zakończyć już aktywny zwykły pomiar, a wznowienie wy
 .\tools\set-admin-password.ps1
 ```
 
-Wpisz dwa razy własne hasło (minimum 20 znaków; nie będzie widoczne). Skrypt przygotuje
-Argon2 i zbuduje APK w `app/build/outputs/apk/debug/app-debug.apk`. Zainstaluj je jako
-aktualizację i wpisz to hasło w **Ustawienia → Odblokowanie zwykłego stopera**.
-Odblokowanie będzie trwałe, także po zamknięciu aplikacji i restarcie telefonu.
-Na tym komputerze skrypt wykrywa przygotowane Python i JDK; na innym potrzebne są
-Python 3, JDK 21 i Android SDK 36. Podpis aktualizacji musi odpowiadać instalacji.
+Wpisz dwa razy własne hasło (minimum 20 znaków; nie będzie widoczne). Skrypt zapisze
+wyłącznie weryfikator w **`config/admin-verifier.json`**, zatwierdzi ten plik i wyśle na `main`.
+Potrzebne są Python 3 i dostęp Git do repozytorium. **Nie trzeba przebudowywać ani instalować APK.**
+Opcja `-NoPush` zapisuje tylko plik lokalny, do samodzielnego przeglądu i publikacji.
+
+Od wersji **1.2** aplikacja pobiera aktualny weryfikator z repo przy każdej próbie trwałego
+odblokowania, a hasło sprawdza lokalnie. Ta czynność wymaga internetu; hasło nie jest wysyłane
+do GitHuba. Nie używamy starego weryfikatora z cache. Po poprawnym wpisaniu odblokowanie
+pozostaje trwałe także offline, po restarcie telefonu i po aktualizacji APK.
+Zmiana hasła nie cofa już przyznanych trwałych odblokowań.
 
 Opcja `.\tools\set-admin-password.ps1 -Generate` losuje hasło i przekazuje je do schowka,
 żeby zapisać je w menedżerze haseł. Nie wpisuj hasła w poleceniu ani w czacie.
@@ -119,8 +124,8 @@ Opcja `.\tools\set-admin-password.ps1 -Generate` losuje hasło i przekazuje je d
 Ręczny wariant i szczegóły techniczne:
 
 W repo jest wyłącznie weryfikator **Argon2id v19, 64 MiB, 3 iteracje, 1 wątek, losowa sól 16 B**.
-Bootstrap wygenerował losowe hasło i je odrzucił — nie istnieje wspólne hasło administratora,
-które należałoby przekazywać w czacie. Przed korzystaniem z trwałego odblokowania ustaw własne:
+Sól i hash są publiczne, a hasło pozostaje u właściciela. W APK 1.2+ nie ma tego weryfikatora.
+Ręcznie można utworzyć plik poniższymi poleceniami, po czym zatwierdzić i wysłać go do repo:
 
 ```powershell
 python -m pip install -r tools/requirements.txt
@@ -134,10 +139,9 @@ i czyści schowek. Ten tryb wymaga interaktywnego terminala i systemowego narzę
 (`clip.exe`, `pbcopy`, `wl-copy` lub `xclip`). Hasło nie jest wypisywane do terminala ani logów.
 Skrypt nie przyjmuje hasła jako argumentu, nie zapisuje go do pliku i nie wypisuje w trybie własnego hasła.
 
-Zmienia się tylko `app/src/main/assets/admin_verifier.json`. Przebuduj APK i wydaj aktualizację
-podpisaną tym samym kluczem. Nowa instalacja zweryfikuje nowe hasło lokalnie. Dotychczasowe
-trwałe odblokowanie pozostaje trwałe; rotacja hasła nie cofa już nadanych uprawnień.
-Po 5 błędnych próbach działa trwały cooldown od 30 s do 1 godziny.
+Po 5 błędnych hasłach działa trwały cooldown od 30 s do 1 godziny. Błąd połączenia z repo
+nie jest liczony jako błędne hasło. Starsze APK 1.0/1.1 trzeba jednorazowo zaktualizować do 1.2;
+korzystały z weryfikatora wbudowanego podczas kompilacji.
 
 Blokada jest kontrolą funkcji. Całkowicie offline klient nie gwarantuje odporności na zmodyfikowane
 APK, root, podmianę lokalnych danych czy reinstalację. Nie zabezpiecza danych wrażliwych.
@@ -157,8 +161,9 @@ sesji z ZIP-a również zawsze przywraca ją jako wstrzymaną. Nie tworzy drugie
 Nie ma usługi foreground ani cyklicznego budzenia procesora w tle. Systemowy chronometr
 w powiadomieniu odświeża czas sam. Aplikacja nie żąda uprawnień do kamery ani całej pamięci;
 zdjęcie robi zewnętrzna aplikacja aparatu przez FileProvider, pliki wybiera systemowy selektor.
-Uprawnienia: internet do okładek i opcjonalnego Drive, powiadomienia (zgoda od Androida 13)
-oraz normalne uprawnienie do promowanych powiadomień. Odrzucenie zgody nie blokuje pomiaru.
+Uprawnienia: internet do okładek, aktualizacji, hasła administratora i opcjonalnego Drive;
+powiadomienia (zgoda od Androida 13), normalne uprawnienie do promowanych powiadomień
+oraz żądanie instalacji aktualizacji APK za zgodą systemową. Odmowa nie blokuje pomiaru.
 O wyglądzie pastylki/Now Bar decyduje Android i producent; szczegóły: [SYSTEM_TIMER.md](docs/SYSTEM_TIMER.md).
 
 ## Wyszukiwanie okładek
@@ -219,6 +224,13 @@ również podczas czytania. Kopia wymaga wolnego miejsca na plik i tymczasowe ro
 Pełna instrukcja: [docs/GOOGLE_DRIVE.md](docs/GOOGLE_DRIVE.md).
 Wymagane są projekt Google Cloud, Drive API, ekran zgody oraz klient Android dla pakietu
 i SHA certyfikatu. Bez nich połączenie nie zadziała. Biblioteka i lokalne kopie pozostają niezależne.
+
+## Aktualizacje poza sklepami
+
+**Ustawienia → Aktualizacje**: sprawdź, pobierz i zainstaluj nowe APK. Aplikacja sprawdza też
+nowe wersje przy uruchomieniu, najwyżej raz na 6 godzin. Pierwszą wersję z aktualizatorem (1.2)
+trzeba zainstalować ręcznie. Nie używamy serwera właściciela ani GitHub Actions.
+Instrukcja dla użytkownika i wydawcy: [docs/UPDATES.md](docs/UPDATES.md).
 
 ## Lokalne testy
 

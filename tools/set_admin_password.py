@@ -15,7 +15,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[1]
-TARGET = ROOT / "app/src/main/assets/admin_verifier.json"
+TARGET = ROOT / "config/admin-verifier.json"
 
 def clipboard_command():
     for command in (["clip.exe"],) if sys.platform == "win32" else ((["pbcopy"],) if sys.platform == "darwin" else (["wl-copy"], ["xclip", "-selection", "clipboard"])):
@@ -58,7 +58,7 @@ def main():
                     memoryKiB=65536, iterations=3, parallelism=1, version=19)
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     TARGET.write_text(json.dumps(verifier, indent=2) + "\n", encoding="utf-8")
-    print("Zapisano weryfikator Argon2id. Przebuduj aplikację i wydaj aktualizację.")
+    print("Zapisano weryfikator Argon2id w config/admin-verifier.json. Opublikuj go w repo; nie trzeba przebudowywać APK 1.2+.")
     return 0
 
 if __name__ == "__main__":

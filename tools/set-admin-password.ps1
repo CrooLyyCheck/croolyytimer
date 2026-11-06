@@ -1,4 +1,4 @@
-﻿param([switch]$Generate)
+﻿param([switch]$Generate, [switch]$NoPush)
 $ErrorActionPreference = 'Stop'
 $projectDirectory = Split-Path -Parent $PSScriptRoot
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
@@ -11,16 +11,15 @@ try {
     if ($Generate) { & $pythonExecutable tools/set_admin_password.py --generate }
     else { & $pythonExecutable tools/set_admin_password.py }
     if ($LASTEXITCODE -ne 0) { throw 'Zmiana hasła została przerwana.' }
-    $bundledJava = Join-Path $env:USERPROFILE '.cache\croolyycar-toolchain\jdk-21\jdk-21.0.11+10'
-    if (-not $env:JAVA_HOME -and (Test-Path -LiteralPath $bundledJava)) { $env:JAVA_HOME = $bundledJava }
-    $temporaryDirectory = Join-Path $projectDirectory '.tmp'
-    New-Item -ItemType Directory -Path $temporaryDirectory -Force | Out-Null
-    $previousJavaOptions = $env:JAVA_TOOL_OPTIONS
-    try {
-        $env:JAVA_TOOL_OPTIONS = "$previousJavaOptions -Djdk.net.unixdomain.tmpdir=$temporaryDirectory"
-        & .\gradlew.bat assembleDebug --console=plain
-        if ($LASTEXITCODE -ne 0) { throw 'Hasło ustawiono, ale kompilacja nie powiodła się. Popraw błąd i uruchom .\gradlew.bat assembleDebug.' }
-    } finally { $env:JAVA_TOOL_OPTIONS = $previousJavaOptions }
-    Write-Host 'Gotowe: app\build\outputs\apk\debug\app-debug.apk'
-    Write-Host 'Zainstaluj jako aktualizację, otwórz Ustawienia aplikacji i wpisz swoje hasło. Stoper odblokuje się na stałe.'
+    if ($NoPush) { Write-Host 'Zapisano lokalnie. Opublikuj config/admin-verifier.json, aby udostępnić nowe hasło aplikacji.'; return }
+    $branch = & git branch --show-current
+    if ($LASTEXITCODE -ne 0 -or $branch -ne 'main') { throw 'Hash zapisano lokalnie. Publikacja wymaga gałęzi main.' }
+    & git add -- config/admin-verifier.json
+    if ($LASTEXITCODE -ne 0) { throw 'Nie udało się przygotować weryfikatora do publikacji.' }
+    & git commit --only -m 'Rotate administrator password verifier' -- config/admin-verifier.json
+    if ($LASTEXITCODE -ne 0) { throw 'Nie udało się zapisać zmiany w Git.' }
+    & git push origin main
+    if ($LASTEXITCODE -ne 0) { throw 'Weryfikator zapisano, ale publikacja nie powiodła się. Sprawdź dostęp do GitHuba i uruchom git push origin main.' }
+    Write-Host 'Gotowe. Nowe hasło jest opublikowane w repo jako hash. APK 1.2+ pobierze go przy odblokowaniu.'
+    Write-Host 'Nie trzeba budować ani instalować kolejnej wersji aplikacji.'
 } finally { Pop-Location }

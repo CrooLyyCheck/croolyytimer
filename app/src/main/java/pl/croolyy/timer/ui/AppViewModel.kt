@@ -26,6 +26,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val notificationPermissionChannel = Channel<Unit>(Channel.BUFFERED)
     val notificationPermissionRequests = notificationPermissionChannel.receiveAsFlow()
     val openActive = MutableStateFlow(false)
+    val unlocking = MutableStateFlow(false)
+    val installingUpdate = MutableStateFlow(false)
     val operation = MutableStateFlow<Operation?>(null)
     val now = MutableStateFlow(app.clock.now())
     val driveBackups = MutableStateFlow<List<DriveBackup>>(emptyList())
@@ -61,7 +63,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     } }
     suspend fun notify(message: String) { messageChannel.send(message) }
     fun error(message: String) { runAction { notify(message) } }
-    fun unlock(password: CharArray) { runAction { notify(app.access.unlock(password)) } }
+    fun unlock(password: CharArray) {
+        if (unlocking.value) { password.fill('\u0000'); return }
+        unlocking.value = true
+        runAction { try { notify(app.access.unlock(password)) } finally { password.fill('\u0000'); unlocking.value = false } }
+    }
     fun start(timerId: String?, page: Int?) { runAction {
         if (timerId == null) { app.access.refresh(); require(access.value.unlocked) { "Odblokuj zwykły stoper w ustawieniach." } }
         repository.start(timerId, page)

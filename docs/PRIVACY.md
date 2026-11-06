@@ -3,6 +3,15 @@
 CrooLyyTimer nie zawiera reklam, analityki ani obowiązkowego konta. Książki, obrazy,
 historia i ustawienia są w prywatnej przestrzeni Android. Aplikacja nie wysyła ich automatycznie.
 
+Od wersji 1.2 aplikacja może sprawdzać nowe wersje na GitHubie przy uruchomieniu, najwyżej raz
+na 6 godzin. Można to wyłączyć w ustawieniach. Katalog wersji i APK są publiczne; konto GitHub
+nie jest potrzebne. Pobierany jest także publiczny weryfikator przy próbie trwałego odblokowania
+stopera. Wpisane hasło i jego wyliczony hash nie są wysyłane do dostawcy. GitHub widzi zwykłe
+dane połączenia, np. IP i identyfikator aplikacji, bez biblioteki i historii czytania.
+Weryfikator nie jest przechowywany w APK ani używany offline. Przyznane trwałe odblokowanie
+pozostaje w telefonie; zmiana hasła w repo go nie cofa. Pliki aktualizatora i jego preferencje
+są lokalne dla urządzenia i nie są eksportowane do kopii biblioteki ZIP.
+
 Wyszukiwanie okładek jest dobrowolne: po naciśnięciu przycisku wpisany tytuł trafia przez HTTPS
 do Open Library. Dostawca widzi także zwykłe dane połączenia (np. adres IP i identyfikator aplikacji).
 Nie przesyłamy historii sesji, całej biblioteki ani danych konta Google. Wybrana okładka zostaje

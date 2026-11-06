@@ -105,6 +105,8 @@ class NativeUiTest {
         compose.onNodeWithText("Ustawienia", useUnmergedTree = true).performClick()
         compose.onNodeWithTag("about-card").performScrollTo().assertExists()
         screenshot("09-settings-about")
+        compose.onNodeWithTag("update-card").performScrollTo()
+        screenshot("10-updates-settings")
     }
 }
 

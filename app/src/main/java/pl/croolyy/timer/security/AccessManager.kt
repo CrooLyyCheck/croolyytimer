@@ -47,10 +47,9 @@ data class AccessState(val unlocked: Boolean = false, val permanent: Boolean = f
 /** Offline feature gate; intentionally excluded from user backups. */
 class AccessManager(context: Context, private val clock: AppClock,
     private val verifierOverride: AdminVerifier? = null,
-    storeOverride: androidx.datastore.core.DataStore<Preferences>? = null) {
+    storeOverride: androidx.datastore.core.DataStore<Preferences>? = null,
+    private val verifierProvider: suspend () -> AdminVerifier = { RemoteAdminVerifier.fetch() }) {
     private val store = storeOverride ?: context.accessStore
-    private val verifier by lazy { verifierOverride ?: Json.decodeFromString<AdminVerifier>(
-        context.assets.open("admin_verifier.json").bufferedReader().use { it.readText() }) }
     private val mutex = Mutex()
     private val mutable = MutableStateFlow(AccessState())
     val state = mutable.asStateFlow()
@@ -84,16 +83,28 @@ class AccessManager(context: Context, private val clock: AppClock,
         val p = store.edit { now = trusted(it, clock.now()) }
         publish(p, now)
     }
-    suspend fun unlock(password: CharArray): String = mutex.withLock {
+    suspend fun unlock(password: CharArray): String {
         try {
             require(password.size <= 1024) { "Hasło jest zbyt długie." }
+            val user = password.contentEquals("takchce".toCharArray())
+            val verifier = if (user) null else {
+                // Do not hold the ledger lock while waiting for the network.
+                mutex.withLock {
+                    var trustedNow = 0L
+                    val ledger = store.edit { trustedNow = trusted(it, clock.now()) }
+                    publish(ledger, trustedNow)
+                    val cooldown = ledger[Keys.cooldown] ?: 0
+                    require(cooldown <= trustedNow) { "Za dużo prób. Spróbuj za ${(cooldown - trustedNow + 999) / 1000} s." }
+                }
+                verifierOverride ?: verifierProvider()
+            }
+            return mutex.withLock {
             var now = 0L
             val before = store.edit { now = trusted(it, clock.now()) }
             publish(before, now)
             val cooldown = before[Keys.cooldown] ?: 0
             require(cooldown <= now) { "Za dużo prób. Spróbuj za ${(cooldown - now + 999) / 1000} s." }
-            val user = password.contentEquals("takchce".toCharArray())
-            val admin = !user && withContext(Dispatchers.Default) { verifier.verify(password) }
+            val admin = !user && withContext(Dispatchers.Default) { requireNotNull(verifier).verify(password) }
             val p = store.edit {
                 now = trusted(it, clock.now())
                 if (user || admin) {
@@ -109,6 +120,7 @@ class AccessManager(context: Context, private val clock: AppClock,
             publish(p, now)
             require(user || admin) { "Nieprawidłowe hasło." }
             if (mutable.value.permanent) "Stoper odblokowany na stałe" else "Stoper odblokowany na 7 dni"
+            }
         } finally { password.fill('\u0000') }
     }
 }

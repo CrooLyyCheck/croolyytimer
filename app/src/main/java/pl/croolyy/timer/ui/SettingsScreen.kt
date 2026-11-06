@@ -21,6 +21,7 @@ import pl.croolyy.timer.BuildConfig
 import pl.croolyy.timer.backup.DriveBackup
 import pl.croolyy.timer.data.AppSettings
 import pl.croolyy.timer.security.AccessState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable fun SettingSwitch(title: String, subtitle: String? = null, checked: Boolean, change: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -34,13 +35,18 @@ import pl.croolyy.timer.security.AccessState
 
 @Composable fun SettingsScreen(settings: AppSettings, access: AccessState, vm: AppViewModel,
     lastBackup: Long, connected: Boolean, backups: List<DriveBackup>,
-    onExport: () -> Unit, onImport: () -> Unit, onConnect: () -> Unit, onDisconnect: () -> Unit, onDriveUpload: () -> Unit) {
+    onExport: () -> Unit, onImport: () -> Unit, onConnect: () -> Unit, onDisconnect: () -> Unit, onDriveUpload: () -> Unit,
+    onInstallUpdate: () -> Unit = {}) {
     var password by remember { mutableStateOf("") }
     var deleteBackup by remember { mutableStateOf<DriveBackup?>(null) }
     var privacy by remember { mutableStateOf(false) }
     var licenses by remember { mutableStateOf(false) }
     val links = LocalUriHandler.current
     val context = LocalContext.current
+    val unlocking by vm.unlocking.collectAsStateWithLifecycle()
+    val installing by vm.installingUpdate.collectAsStateWithLifecycle()
+    val updates by vm.app.updates.state.collectAsStateWithLifecycle()
+    val library by vm.library.collectAsStateWithLifecycle()
     fun notificationSettings(promoted: Boolean = false) {
         val action = if (promoted && android.os.Build.VERSION.SDK_INT >= 36) android.provider.Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS
             else android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS
@@ -66,7 +72,8 @@ import pl.croolyy.timer.security.AccessState
                 else -> "Zwykły stoper jest zablokowany. Stopery książek są zawsze dostępne." }, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(password, { if (it.length <= 1024) password = it }, Modifier.fillMaxWidth(), label = { Text("Hasło odblokowujące") },
                 visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), singleLine = true)
-            Button({ val chars = password.toCharArray(); password = ""; vm.unlock(chars) }, enabled = password.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("Odblokuj stoper") }
+            Button({ val chars = password.toCharArray(); password = ""; vm.unlock(chars) }, enabled = password.isNotEmpty() && !unlocking, modifier = Modifier.fillMaxWidth()) { Text(if (unlocking) "Sprawdzanie hasła…" else "Odblokuj stoper") }
+            Text("Trwałe odblokowanie wymaga połączenia z internetem.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (access.cooldownUntil > access.trustedNow) Text("Przerwa po nieudanych próbach: ${(access.cooldownUntil - access.trustedNow + 999) / 1000} s.", style = MaterialTheme.typography.bodySmall)
         }
         SoftCard {
@@ -125,6 +132,8 @@ import pl.croolyy.timer.security.AccessState
                 }
             }
         }
+        UpdateCard(updates, library.active != null, installing, { vm.app.updates.check() }, vm.app.updates::download,
+            onInstallUpdate, vm.app.updates::cancelDownload, vm.app.updates::setAutomatic, vm.app.updates::setPreview)
         SoftCard(Modifier.fillMaxWidth().testTag("about-card")) {
             Brand()
             Text("Wersja ${BuildConfig.VERSION_NAME} · Android 8.0+", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
@@ -136,7 +145,7 @@ import pl.croolyy.timer.security.AccessState
     }
     deleteBackup?.let { backup -> ConfirmDialog("Usunąć kopię z Google Drive?", "Usuniesz trwale tylko wybraną kopię: ${backup.name}. Pozostałe kopie i dane w telefonie zostaną zachowane.", onDismiss = { deleteBackup = null }) { vm.deleteDrive(backup) } }
     if (privacy) AlertDialog(onDismissRequest = { privacy = false }, title = { Text("Twoje dane należą do Ciebie") },
-        text = { Text("Twoja biblioteka i pomiary działają offline, bez reklam i analityki. Książki, okładki i historia są przechowywane w telefonie. Gdy szukasz okładki, wpisany tytuł trafia do Open Library. Wybrany obraz zapisujemy w aplikacji. Konto Google jest potrzebne wyłącznie do kopii na Google Drive. Kopia ZIP zawiera bibliotekę i ustawienia, ale nie odblokowanie stopera. Usunięcie aplikacji usuwa lokalne dane — zachowaj kopię zapasową.") },
+        text = { Text("Twoja biblioteka i pomiary działają offline, bez reklam i analityki. Gdy szukasz okładki, wpisany tytuł trafia do Open Library. Aktualizacje i dane do sprawdzenia hasła administratora pobieramy z GitHuba. Wpisane hasło jest sprawdzane w telefonie i nigdzie go nie wysyłamy. Automatyczne sprawdzanie aktualizacji można wyłączyć. Konto Google służy wyłącznie kopiom na Google Drive. Kopia ZIP zawiera bibliotekę i ustawienia czytania, ale nie odblokowanie stopera. Usunięcie aplikacji usuwa lokalne dane — zachowaj kopię zapasową.") },
         confirmButton = { TextButton({ privacy = false }) { Text("Rozumiem") } })
     if (licenses) AlertDialog(onDismissRequest = { licenses = false }, title = { Text("Licencja i biblioteki") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

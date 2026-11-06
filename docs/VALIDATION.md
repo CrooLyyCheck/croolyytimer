@@ -1,22 +1,24 @@
-# Weryfikacja CrooLyyTimer 1.1.0
+# Weryfikacja CrooLyyTimer 1.2.0
 
-Data: **6 listopada 2026**. Weryfikacja lokalna na Windows, JDK 21, Gradle Wrapper 9.4.1,
+Data: **6–7 listopada 2026**. Weryfikacja lokalna na Windows, JDK 21, Gradle Wrapper 9.4.1,
 Android SDK 36. Zgodnie z decyzją właściciela repozytorium **nie używa GitHub Actions**.
 
 ## Automatyczne sprawdzenia
 
 | Sprawdzenie | Wynik |
 | --- | --- |
-| Testy Kotlin / JVM / Robolectric | 41 testów, 0 błędów |
-| Test skryptu zmiany hasła | 1 test, 0 błędów |
-| Android lint debug | 0 błędów; pozostają ostrzeżenia o nowszych wersjach zależności i drobne zalecenia |
+| Testy Kotlin / JVM / Robolectric | 49 testów, 0 błędów |
+| Testy skryptów Python | 2 testy, 0 błędów |
+| Android lint debug | 0 błędów, 27 ostrzeżeń o wersjach zależności i zaleceniach |
 | APK debug | zbudowany; podpis debug |
 | APK release | zbudowany z R8 i redukcją zasobów; bez klucza właściciela pozostaje unsigned |
 | APK testów urządzeniowych | zbudowany |
 
 Podpis debug został zweryfikowany narzędziem Android `apksigner verify --print-certs`.
-APK: `CrooLyyTimer-1.1.0-debug.apk` (24 776 400 B), `versionCode=2`, pakiet `pl.croolyy.timer`.
-SHA-256: `59ca5b2b9a4ad931a1f0b95a2f5dc7d6d0d500d45efb8be7773cc37a02ef9b70`.
+Metadane APK i suma kontrolna 1.2.0 są publikowane w `updates.json` oraz w wydaniu GitHub.
+APK: `CrooLyyTimer-1.2.0-debug.apk`, 24 528 782 B, `versionCode=3`.
+SHA-256: `60e93a2228f42b3283374ed5284a817fe550bb4cfa45c3145821d52c69c36aef`.
+Sprawdzono zawartość APK: nie ma pliku weryfikatora ani wartości hasha administratora.
 SHA-1 certyfikatu: `FD:21:F8:38:94:E1:08:8B:BC:22:18:86:FF:28:C1:B3:77:0A:F9:32`,
 ten sam co 1.0.0. `aapt dump badging` potwierdza Android 8.0+ i target 36.
 
@@ -58,6 +60,15 @@ python -m unittest discover -s tools/tests -v
   tożsamość działań dla konkretnej sesji i respektowanie usunięcia powiadomienia.
 - Działanie ze starego powiadomienia nie zmienia nowej sesji; zablokowanego zwykłego stopera
   nie można wznowić przyciskiem powiadomienia.
+- Aktualizator: wybór kanału, wyższy numer wersji, zgodność z Androidem, ograniczenia rozmiaru
+  i formatu katalogu, odrzucanie podmienionego pakietu, wersji, sumy pliku i certyfikatu.
+- Interfejs pokazuje dostępną aktualizację i pozwala rozpocząć pobieranie; instalacja jest
+  zablokowana podczas aktywnej sesji. Nowa karta ustawień została wyrenderowana i obejrzana.
+- Zdalne hasło: format weryfikatora, brak liczenia awarii sieci jako błędnych haseł,
+  pobranie nowego weryfikatora przy kolejnych próbach, zachowanie trwałego odblokowania
+  oraz brak blokowania odświeżania zegara podczas oczekiwania na sieć.
+- Skrypt przygotowania aktualizacji odczytuje i sprawdza faktyczne APK, a następnie generuje
+  katalog z jego rozmiarem, SHA-256, wersją i certyfikatem. Nie publikuje nic automatycznie.
 - 6 listopada 2026 wykonano rzeczywiste zapytanie Search API o „Mały Książę”: zwróciło kilka
   wydań z okładkami. Duży obraz z Covers API zwrócił HTTP 200 i 31 865 B. To próba HTTP na hoście,
   a nie test internetu i importu na fizycznym telefonie.
@@ -97,13 +108,18 @@ Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do i
    oraz PowerShell 7.6. Używa UTF-8 z BOM, co utrwala także `.editorconfig`.
    Rotacja hasła w Pythonie ma test automatyczny.
    Prywatne hasło właściciela nie zostało ustawione ani wygenerowane w logach tej sesji.
+10. Pełny przebieg systemowej instalacji APK, powrót z ekranu zezwolenia i odblokowanie własnym
+    hasłem na rzeczywistym telefonie nie zostały wykonane w tym środowisku. Testy potwierdzają
+    reguły walidacji i interfejs; instalator jest systemową częścią Androida.
 
 ## Świadome ograniczenia
 
 - Po restarcie telefonu zachowujemy czas do ostatniego checkpointu i wstrzymujemy sesję.
   Brakującą część można uzupełnić po zapisie w historii. Nie doliczamy czasu wyłączonego telefonu.
 - Lokalna blokada funkcji nie jest zabezpieczeniem wrażliwych danych przed rootem lub zmienionym APK.
-- Pierwszy losowy sekret administratora został odrzucony; właściciel ustawia własny skryptem i przebudowuje APK.
+- Dawne APK 1.0/1.1 wymagają jednorazowej aktualizacji, aby korzystać ze zmiany hasła w repo.
+- Od APK 1.2 źródłem weryfikatora administratora jest repo. Zmiana nie wymaga przebudowania APK,
+  ale przyszłe trwałe odblokowanie wymaga internetu. Rotacja nie cofa już przyznanych uprawnień.
 - Przerwany transfer Drive jest ponawiany jako nowy transfer, bez wznawiania po śmierci procesu.
 - Nie ma automatycznych kopii ani usługi foreground. Chronometr powiadomienia obsługuje system;
   pomiar nie wymaga pracy procesora co sekundę w tle.

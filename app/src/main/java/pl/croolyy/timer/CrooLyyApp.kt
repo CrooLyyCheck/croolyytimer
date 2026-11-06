@@ -18,6 +18,7 @@ open class CrooLyyApp : Application() {
     val covers by lazy { CoverStore(this) }
     val coverSearch by lazy { OpenLibraryClient(cacheDir) }
     val notifications by lazy { pl.croolyy.timer.notifications.SessionNotifications(this) }
+    val updates by lazy { pl.croolyy.timer.update.UpdateManager(this, scope) }
     val access by lazy { AccessManager(this, clock) }
     val backup by lazy { BackupManager(this, repository, covers) }
 }

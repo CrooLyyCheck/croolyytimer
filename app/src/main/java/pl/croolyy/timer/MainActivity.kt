@@ -2,6 +2,8 @@ package pl.croolyy.timer
 
 import android.os.Bundle
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import pl.croolyy.timer.notifications.SessionNotifications
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +25,11 @@ class MainActivity : ComponentActivity() {
     private val vm: AppViewModel by viewModels()
     private val authorization by lazy { Identity.getAuthorizationClient(this) }
     private val scopes = listOf(Scope(DriveClient.SCOPE))
+    private val installPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (packageManager.canRequestPackageInstalls()) installUpdate()
+        else vm.error("Zezwolenie na instalację nie zostało przyznane. Możesz spróbować ponownie w ustawieniach aplikacji.")
+    }
+    private val installer = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
     private val googleConsent = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == RESULT_OK && result.data != null) {
             runCatching { authorization.getAuthorizationResultFromIntent(result.data).accessToken }
@@ -35,7 +42,26 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         if (intent?.action == SessionNotifications.OPEN) vm.openActive.value = true
         lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { vm.visibleTicker() } }
-        setContent { CrooApp(vm, ::connectGoogle, ::disconnectGoogle) }
+        setContent { CrooApp(vm, ::connectGoogle, ::disconnectGoogle, ::installUpdate) }
+    }
+    override fun onStart() { super.onStart(); (application as CrooLyyApp).updates.check(manual = false) }
+    private fun installUpdate() {
+        if (vm.installingUpdate.value) return
+        vm.installingUpdate.value = true
+        vm.runAction {
+            try {
+                require(vm.repository.dao.active() == null) { "Zakończ aktywną sesję przed instalacją aktualizacji." }
+                if (!packageManager.canRequestPackageInstalls()) {
+                    installPermission.launch(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                } else {
+                    val intent = vm.app.updates.installIntent()
+                    require(vm.repository.dao.active() == null) { "Zakończ aktywną sesję przed instalacją aktualizacji." }
+                    installer.launch(intent)
+                }
+            } catch (e: android.content.ActivityNotFoundException) { vm.error("Nie można otworzyć instalatora Androida na tym urządzeniu.") }
+            catch (e: SecurityException) { vm.error("Android zablokował instalację. Sprawdź ustawienia instalowania aplikacji.") }
+            finally { vm.installingUpdate.value = false }
+        }
     }
     override fun onStop() { vm.backgroundCheckpoint(); super.onStop() }
     override fun onResume() {

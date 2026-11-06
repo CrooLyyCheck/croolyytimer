@@ -21,9 +21,10 @@ import androidx.navigation.createGraph
 import pl.croolyy.timer.data.*
 import java.time.LocalDate
 
-@Composable fun CrooApp(vm: AppViewModel, connectGoogle: () -> Unit, disconnectGoogle: () -> Unit) {
+@Composable fun CrooApp(vm: AppViewModel, connectGoogle: () -> Unit, disconnectGoogle: () -> Unit, onInstallUpdate: () -> Unit = {}) {
     val state by vm.library.collectAsStateWithLifecycle()
     val access by vm.access.collectAsStateWithLifecycle()
+    val updates by vm.app.updates.state.collectAsStateWithLifecycle()
     val operation by vm.operation.collectAsStateWithLifecycle()
     val lastBackup by vm.lastBackup.collectAsStateWithLifecycle()
     val connected by vm.driveConnected.collectAsStateWithLifecycle()
@@ -90,7 +91,16 @@ import java.time.LocalDate
     CrooTheme(state.settings.theme) {
         Scaffold(containerColor = MaterialTheme.colorScheme.background,
             topBar = { Surface(color = MaterialTheme.colorScheme.background) {
-                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp)) { Brand() }
+                Column {
+                    Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 22.dp, vertical = 14.dp)) { Brand() }
+                    if (updates.release != null && !updates.hidden && state.active == null && route != "settings") {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text("Dostępna wersja ${updates.release!!.versionName}", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                            TextButton({ navigate("settings") }) { Text("Zobacz") }
+                            IconButton(vm.app.updates::hideBanner) { Icon(Icons.Outlined.Close, "Ukryj informację o aktualizacji") }
+                        }
+                    }
+                }
             } },
             bottomBar = { Column {
                 if (state.active != null && route != "focus" && operation == null) ActiveDock(state.active!!, state, vm) { nav.navigate("focus") { launchSingleTop = true } }
@@ -122,7 +132,7 @@ import java.time.LocalDate
                     composable("calendar/{id}") { stack -> CalendarScreen(state, vm.app.covers::file, stack.arguments?.getString("id"), onBook = { nav.navigate("book/$it") }) }
                     composable("settings") { SettingsScreen(state.settings, access, vm, lastBackup, connected, backups,
                         { requestExport(false) }, { import.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
-                        connectGoogle, disconnectGoogle, { requestExport(true) }) }
+                        connectGoogle, disconnectGoogle, { requestExport(true) }, onInstallUpdate) }
                 } }
                 NavHost(nav, graph,
                     enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None },
