@@ -3,6 +3,10 @@ package pl.croolyy.timer.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -32,6 +36,16 @@ private val DarkColors = darkColorScheme(
 
 @Composable fun CrooTheme(theme: String, content: @Composable () -> Unit) {
     val dark = when (theme) { "light" -> false; "dark" -> true; else -> isSystemInDarkTheme() }
+    val view = LocalView.current
+    val activity = LocalActivity.current
+    SideEffect {
+        activity?.window?.let { window ->
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !dark
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
     MaterialTheme(colorScheme = if (dark) DarkColors else LightColors,
         typography = Typography(
             displayLarge = TextStyle(fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Normal),

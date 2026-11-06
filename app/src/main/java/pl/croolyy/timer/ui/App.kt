@@ -3,6 +3,7 @@ package pl.croolyy.timer.ui
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.LocalActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -42,7 +43,7 @@ import java.time.LocalDate
         else vm.export(uri, prepared.password)
     }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::stage) }
-    val activity = LocalContext.current as ComponentActivity
+    val activity = requireNotNull(LocalActivity.current)
     val keepOn = state.settings.keepScreenOn && state.active?.running == true
     DisposableEffect(keepOn) {
         if (keepOn) activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

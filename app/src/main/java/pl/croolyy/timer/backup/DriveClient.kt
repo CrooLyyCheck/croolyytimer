@@ -35,8 +35,14 @@ class DriveClient(private val token: String) {
     }
     private fun jsonResponse(c: HttpURLConnection): JsonObject {
         checked(c)
-        val bytes = c.inputStream.use { it.readNBytes(2 * 1024 * 1024 + 1) }
-        require(bytes.size <= 2 * 1024 * 1024) { "Zbyt duża odpowiedź Google Drive." }
+        val bytes = c.inputStream.use { input -> java.io.ByteArrayOutputStream().use { out ->
+            val buffer = ByteArray(8192); var total = 0
+            while (true) { val n = input.read(buffer); if (n < 0) break
+                total += n; require(total <= 2 * 1024 * 1024) { "Zbyt duża odpowiedź Google Drive." }
+                out.write(buffer, 0, n)
+            }
+            out.toByteArray()
+        } }
         return driveJson.parseToJsonElement(bytes.decodeToString()).jsonObject
     }
     suspend fun list(): List<DriveBackup> = withContext(Dispatchers.IO) {

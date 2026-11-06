@@ -74,7 +74,13 @@ dependencies {
     testImplementation("androidx.test:core:1.7.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("androidx.room:room-testing:2.8.5")
+    testImplementation(bom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+}
+
+tasks.withType<Test>().configureEach {
+    systemProperty("croolyy.screenshots", layout.buildDirectory.dir("reports/ui-screenshots").get().asFile.absolutePath)
 }
