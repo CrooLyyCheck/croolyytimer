@@ -1,4 +1,4 @@
-param([switch]$Generate)
+﻿param([switch]$Generate)
 $ErrorActionPreference = 'Stop'
 $projectDirectory = Split-Path -Parent $PSScriptRoot
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue

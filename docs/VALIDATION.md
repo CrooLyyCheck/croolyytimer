@@ -93,7 +93,9 @@ Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do i
 8. Dekoder ImageDecoder z API 28+ używa natywnego kodu Androida, którego odczyt pliku nie działał
    w tym teście Windows. Test UI okładek potwierdza wybór i pobranie pliku, a osobny test API 26
    sprawdza import. Pełny import okładki na nowszym Androidzie pozostaje do sprawdzenia na urządzeniu.
-9. Skrypt PowerShell ma zweryfikowaną składnię, a rotacja hasła w Pythonie test automatyczny.
+9. Skrypt ma zweryfikowaną składnię i poprawne odczytanie polskich znaków w Windows PowerShell 5.1
+   oraz PowerShell 7.6. Używa UTF-8 z BOM, co utrwala także `.editorconfig`.
+   Rotacja hasła w Pythonie ma test automatyczny.
    Prywatne hasło właściciela nie zostało ustawione ani wygenerowane w logach tej sesji.
 
 ## Świadome ograniczenia
