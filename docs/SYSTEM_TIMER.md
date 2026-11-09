@@ -10,6 +10,22 @@ deklaruje `POST_PROMOTED_NOTIFICATIONS` i używa standardowego stylu z chronomet
 Warstwa AndroidX Core 1.17 zapewnia zgodność między API 36 i 36.1.
 W ustawieniach aplikacji jest również przejście do systemowej widoczności na pasku.
 
+## Samsung One UI 9: pastylka aplikacji zewnętrznej
+
+**Potwierdzone przez użytkownika 9 listopada 2026:** na Galaxy S24 Ultra z One UI 9 / Androidem 17
+CrooLyyTimer wyświetlał zwykłe powiadomienie, a w ustawieniach aplikacji nie było przełącznika
+powiadomień na żywo. Pastylka zaczęła działać po włączeniu systemowej opcji:
+
+**Opcje programisty → Więcej ustawień → Aplikacje → Powiadomienia na żywo dla wszystkich aplikacji**
+(`Live notifications for all apps`).
+
+Jeżeli Opcje programisty nie są widoczne, włącz je siedmioma stuknięciami w **Ustawienia →
+Informacje o telefonie → Informacje o oprogramowaniu → Numer wersji**. Nazwy i położenie opcji
+mogą zależeć od wydania One UI. To globalne ustawienie systemu; aplikacja nie może go samodzielnie
+włączyć. Na sprawdzonym telefonie nie była potrzebna zmiana APK ani ponowna instalacja.
+
+To potwierdzenie dotyczy wskazanego urządzenia i konfiguracji, a nie wszystkich wersji One UI.
+
 Na zgodnym systemie może pojawić się pastylka statusu, a na Samsungu odpowiednia powierzchnia
 Live Notifications / Now Bar. Aplikacja nie może wymusić dokładnie takiego wyglądu jak Zegar Samsunga.
 Zależy to od modelu, wersji One UI/Androida, zgód, ustawień blokady i dodatkowych zasad producenta.
