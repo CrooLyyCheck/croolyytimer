@@ -12,6 +12,7 @@ artifacts/
 __pycache__/
 .venv/
 .tmp/
+.codex-remote-attachments/
 *.hprof
 secrets/
 *.log

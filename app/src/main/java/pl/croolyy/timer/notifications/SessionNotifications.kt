@@ -53,7 +53,7 @@ class SessionNotifications(private val app: CrooLyyApp) {
             this.action = action; putExtra(SESSION_ID, active.sessionId)
             data = android.net.Uri.parse("croolyytimer://session/${active.sessionId}/$action")
         }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        return NotificationCompat.Builder(app, CHANNEL)
+        val notification = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_stopwatch)
             .setContentTitle(title)
             .setContentText(if (effectiveRunning) name else "Wstrzymano · ${duration(elapsed)}")
@@ -75,6 +75,9 @@ class SessionNotifications(private val app: CrooLyyApp) {
                     if (!effectiveRunning) setShortCriticalText("Pauza")
                 }
             }.build()
+        return if (Build.VERSION.SDK_INT >= 37) {
+            MetricSessionNotification.apply(app, notification, name, elapsed, effectiveRunning, mark)
+        } else notification
     }
     private fun publish(state: LibraryState) {
         val active = state.active

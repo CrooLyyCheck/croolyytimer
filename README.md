@@ -37,6 +37,7 @@ Rzeczywiste komponenty Android wyrenderowane w testach Robolectric; przykładowa
 - Trwały stoper z zegarem monotonicznym, odtwarzanie po zamknięciu procesu i obsługa restartu telefonu.
 - Osobny zwykły stoper, domyślnie zablokowany, z własną historią.
 - Systemowe powiadomienie z licznikiem, pauzą i wznowieniem; prośba o Live Update na Androidzie 16+.
+  Android 17+: duży czas w treści karty, wspólny pomiar dla karty i pastylki systemowej.
 - Sprawdzanie nowych wersji z GitHuba, pobieranie i instalacja przez system Android, bez sklepu.
 - Pełne kopie ZIP, opcjonalnie AES-256, walidowane i przywracane transakcyjnie.
 - Rzeczywista integracja Google Drive `appDataFolder`, **wymagająca konfiguracji OAuth właściciela**.
@@ -49,7 +50,7 @@ Instrukcje budowania są przeznaczone dla właściciela i osób mających odpowi
 1. Sklonuj repo: `gh repo clone CrooLyyCheck/croolyytimer`.
 2. Otwórz katalog projektu w Android Studio obsługującym AGP 9.2. Użyj JDK 21
    (wbudowany JDK Android Studio też może spełniać wymagania).
-3. Zainstaluj Android SDK Platform 36 i zaakceptuj licencje SDK w SDK Managerze.
+3. Zainstaluj Android SDK Platform 37.0 i zaakceptuj licencje SDK w SDK Managerze.
 4. Pozwól Android Studio ustawić `local.properties` z lokalnym `sdk.dir`.
 5. Poczekaj na Gradle Sync. Wybierz moduł `app` oraz telefon/emulator API 26+ i **Run**.
 

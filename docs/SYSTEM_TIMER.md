@@ -10,6 +10,24 @@ deklaruje `POST_PROMOTED_NOTIFICATIONS` i używa standardowego stylu z chronomet
 Warstwa AndroidX Core 1.17 zapewnia zgodność między API 36 i 36.1.
 W ustawieniach aplikacji jest również przejście do systemowej widoczności na pasku.
 
+## Czytelny czas w karcie od wersji 1.2.1
+
+Na Androidzie 17+ (API 37) powiadomienie używa publicznego systemowego `Notification.MetricStyle`:
+czas jest dużą metryką w treści karty, a nie małym chronometrem obok tytułu w nagłówku.
+Tytuł książki i nazwa stopera trafiają do nagłówka, pod czasem jest opis Pomiar/Wstrzymano.
+Układ zachowuje przyciski Pauza/Wznów i Otwórz. Ten sam czas jest wskazany jako główna metryka
+dla pastylki; nie dodajemy własnego `RemoteViews`, które wykluczałoby standardowe Live Updates.
+
+Trwający pomiar używa systemowego `TimeDifference.forStopwatch` z bazą monotoniczną,
+a pauza `forPausedStopwatch` z nieruchomym czasem. Jeżeli zapisany wcześniej czas sesji jest
+dłuższy niż cały czas od uruchomienia telefonu, bazę widoku przeliczamy na `Instant`;
+trwały pomiar w bazie nadal korzysta z zegara monotonicznego. Po wznowieniu pauza nie jest doliczana.
+Mały zegar w nagłówku jest wyłączony, aby nie dublować głównego czasu.
+
+Na Androidzie 8–16 pozostaje dotychczasowy systemowy chronometr w standardowym powiadomieniu.
+Nowy styl został sprawdzony testami frameworka Android 17 w Robolectric. Dokładna wielkość,
+typografia i położenie elementów na One UI zależą od systemu i wymagają próby nowego APK na Samsungu.
+
 ## Samsung One UI 9: pastylka aplikacji zewnętrznej
 
 **Potwierdzone przez użytkownika 9 listopada 2026:** na Galaxy S24 Ultra z One UI 9 / Androidem 17
@@ -41,5 +59,7 @@ Odrzucenie zgody, systemowe ukrycie lub usunięcie powiadomienia nie przerywa za
 Dokumentacja źródłowa:
 
 - [Android Live Updates i wymagania powiadomienia](https://developer.android.com/develop/ui/views/notifications/live-update)
+- [Android 17: MetricStyle dla stoperów i pomiarów](https://developer.android.com/develop/ui/views/notifications/metric-style)
+- [TimeDifference: trwający i wstrzymany stoper](https://developer.android.com/reference/android/app/Notification.Metric.TimeDifference)
 - [AndroidX NotificationCompat](https://developer.android.com/reference/androidx/core/app/NotificationCompat.Builder#setRequestPromotedOngoing(boolean))
 - [Samsung: Now bar i Live Notifications](https://www.samsung.com/us/support/answer/ANS10004605/)

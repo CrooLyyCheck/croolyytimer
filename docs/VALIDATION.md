@@ -1,23 +1,24 @@
-# Weryfikacja CrooLyyTimer 1.2.0
+# Weryfikacja CrooLyyTimer 1.2.1
 
-Data: **6–7 listopada 2026**. Weryfikacja lokalna na Windows, JDK 21, Gradle Wrapper 9.4.1,
-Android SDK 36. Zgodnie z decyzją właściciela repozytorium **nie używa GitHub Actions**.
+Data: **9 listopada 2026**. Weryfikacja lokalna na Windows, JDK 21, Gradle Wrapper 9.4.1,
+Android SDK 37.0 (compile), target 36, min 26. Zgodnie z decyzją właściciela repozytorium
+**nie używa GitHub Actions**. Zakres wcześniejszego wydania uzupełniono o powiadomienie Androida 17.
 
 ## Automatyczne sprawdzenia
 
 | Sprawdzenie | Wynik |
 | --- | --- |
-| Testy Kotlin / JVM / Robolectric | 49 testów, 0 błędów |
+| Testy Kotlin / JVM / Robolectric | 56 testów, 0 błędów |
 | Testy skryptów Python | 2 testy, 0 błędów |
-| Android lint debug | 0 błędów, 27 ostrzeżeń o wersjach zależności i zaleceniach |
+| Android lint debug | 0 błędów, 26 ostrzeżeń o wersjach zależności i zaleceniach |
 | APK debug | zbudowany; podpis debug |
 | APK release | zbudowany z R8 i redukcją zasobów; bez klucza właściciela pozostaje unsigned |
 | APK testów urządzeniowych | zbudowany |
 
 Podpis debug został zweryfikowany narzędziem Android `apksigner verify --print-certs`.
-Metadane APK i suma kontrolna 1.2.0 są publikowane w `updates.json` oraz w wydaniu GitHub.
-APK: `CrooLyyTimer-1.2.0-debug.apk`, 24 528 782 B, `versionCode=3`.
-SHA-256: `60e93a2228f42b3283374ed5284a817fe550bb4cfa45c3145821d52c69c36aef`.
+Metadane APK i suma kontrolna 1.2.1 są publikowane w `updates.json` oraz w wydaniu GitHub.
+APK: `CrooLyyTimer-1.2.1-debug.apk`, 24 497 663 B, `versionCode=4`.
+SHA-256: `4fac51d24f56d1cb9e218044453e144075885f9b96ea26c81c9cdf441019d233`.
 Sprawdzono zawartość APK: nie ma pliku weryfikatora ani wartości hasha administratora.
 SHA-1 certyfikatu: `FD:21:F8:38:94:E1:08:8B:BC:22:18:86:FF:28:C1:B3:77:0A:F9:32`,
 ten sam co 1.0.0. `aapt dump badging` potwierdza Android 8.0+ i target 36.
@@ -56,8 +57,15 @@ python -m unittest discover -s tools/tests -v
   usuwanie duplikatów, limit propozycji, buforowanie zapytań i wybranego obrazu.
 - Interfejs wyszukania i wyboru dużej okładki z podstawionym transportem. Osobny test API 26
   potwierdza skopiowanie pobranego obrazu do prywatnego magazynu i przetrwanie usunięcia cache.
-- Powiadomienia na API 35 i 36: licznik w górę, nieruchomy czas na pauzie, prośba o promowanie,
+- Powiadomienia na API 35, 36 i 37: licznik w górę, nieruchomy czas na pauzie, prośba o promowanie,
   tożsamość działań dla konkretnej sesji i respektowanie usunięcia powiadomienia.
+- Android 17: systemowy `MetricStyle` z czasem w treści i główną metryką dla pastylki,
+  ukryty mały zegar nagłówka, zachowane tytuł i działania oraz spełnione
+  `hasPromotableCharacteristics()`. Pauza i wznowienie nie doliczają przerwy; zmiana boot
+  zamraża zapisany czas; sesja dłuższa niż uptime zachowuje cały pomiar.
+- Render promowanego szablonu frameworka Android 17 w Robolectric z grafiką natywną:
+  chronometr w treści pokazuje `01:10`, ma zmierzone wymiary i tekst co najmniej 24 sp.
+  To test szablonu Androida, nie render interfejsu One UI.
 - Działanie ze starego powiadomienia nie zmienia nowej sesji; zablokowanego zwykłego stopera
   nie można wznowić przyciskiem powiadomienia.
 - Aktualizator: wybór kanału, wyższy numer wersji, zgodność z Androidem, ograniczenia rozmiaru
@@ -101,9 +109,10 @@ Obrazy są w [screenshots/](screenshots/). Dane testowe nie są dołączone do i
 5. Google Drive ma rzeczywistą implementację API, ale **nie został autoryzowany ani przetestowany
    na koncie właściciela**. Wymaga konfiguracji opisanej w [GOOGLE_DRIVE.md](GOOGLE_DRIVE.md).
 6. Podpisany kluczem właściciela release wymaga jego keystore. Dostarczony debug APK jest instalowalny.
-7. Systemowe wyświetlanie pastylki, Now Bar, uprawnienia i działania z zablokowanego ekranu
-   wymagają końcowej próby na konkretnym Samsungu. Testy JVM potwierdzają budowę i stan
-   powiadomienia, nie zachowanie interfejsu One UI.
+7. Użytkownik potwierdził działanie pastylki na S24 Ultra / One UI 9 / Androidzie 17 po włączeniu
+   systemowej opcji dla wszystkich aplikacji, opisanej w [SYSTEM_TIMER.md](SYSTEM_TIMER.md).
+   Nowy układ dużego czasu w 1.2.1 i działania z zablokowanego ekranu wymagają końcowej próby
+   na tym telefonie. Testy JVM i render szablonu Androida nie zastępują kontroli interfejsu One UI.
 8. Dekoder ImageDecoder z API 28+ używa natywnego kodu Androida, którego odczyt pliku nie działał
    w tym teście Windows. Test UI okładek potwierdza wybór i pobranie pliku, a osobny test API 26
    sprawdza import. Pełny import okładki na nowszym Androidzie pozostaje do sprawdzenia na urządzeniu.

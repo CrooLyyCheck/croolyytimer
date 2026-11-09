@@ -18,14 +18,14 @@ import pl.croolyy.timer.domain.TimeMark
 import pl.croolyy.timer.notifications.SessionNotifications
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35, 36], application = CrooLyyApp::class)
+@Config(sdk = [35, 36, 37], application = CrooLyyApp::class)
 class SessionNotificationsTest {
     @Test fun runningUsesSystemCountUpAndPausedShowsFixedTime() {
         val app = ApplicationProvider.getApplicationContext<CrooLyyApp>()
         val mark = TimeMark(1_800_000_000_000, 80_000, 1)
         val active = ActiveSession(startedAt = mark.wall - 70_000, segmentElapsed = 20_000, checkpointElapsed = 80_000, boot = 1, accumulatedMs = 10_000)
         val running = app.notifications.build(active, "Książka", "Wieczorne czytanie", mark)
-        assertTrue(NotificationCompat.getUsesChronometer(running))
+        assertEquals(Build.VERSION.SDK_INT < 37, NotificationCompat.getUsesChronometer(running))
         assertFalse(running.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
         assertEquals(mark.wall - 70_000, running.`when`)
         assertTrue(running.flags and Notification.FLAG_ONGOING_EVENT != 0)
