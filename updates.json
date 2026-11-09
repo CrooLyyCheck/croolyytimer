@@ -2,16 +2,16 @@
   "schemaVersion": 1,
   "stable": null,
   "preview": {
-    "versionCode": 3,
-    "versionName": "1.2.0",
-    "tag": "v1.2.0",
-    "apkName": "CrooLyyTimer-1.2.0-debug.apk",
-    "sha256": "60e93a2228f42b3283374ed5284a817fe550bb4cfa45c3145821d52c69c36aef",
-    "size": 24528782,
+    "versionCode": 4,
+    "versionName": "1.2.1",
+    "tag": "v1.2.1",
+    "apkName": "CrooLyyTimer-1.2.1-debug.apk",
+    "sha256": "4fac51d24f56d1cb9e218044453e144075885f9b96ea26c81c9cdf441019d233",
+    "size": 24497663,
     "minSdk": 26,
     "signerSha256": [
       "1c63a1c1f01e257044330bba833f688f8190850f9671ab269c01b4cb49ba1bd5"
     ],
-    "notes": "Aktualizator w aplikacji, pobieranie i instalacja nowych wersji oraz zmiana hasła administratora przez repo bez przebudowy APK."
+    "notes": "Android 17+: duży, czytelny czas w treści powiadomienia i wspólny pomiar dla pastylki. Ukryty mały licznik nagłówka, zachowana pauza i wznowienie."
   }
 }
